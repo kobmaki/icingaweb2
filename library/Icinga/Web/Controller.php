@@ -189,7 +189,7 @@ class Controller extends ModuleActionController
      * @param   array       $searchColumns      The search columns to utilize for quick searches
      * @param   array       $preserveParams     The url parameters to preserve
      *
-     * @return  $this
+     * @return  FilterEditor
      *
      * @todo    Preserving and ignoring parameters should be configurable (another two method params? property magic?)
      */
@@ -225,6 +225,6 @@ class Controller extends ModuleActionController
             $this->view->filterEditor = $editor;
         }
 
-        return $this;
+        return $editor;
     }
 }
