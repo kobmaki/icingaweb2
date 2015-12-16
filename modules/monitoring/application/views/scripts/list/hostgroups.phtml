@@ -50,6 +50,7 @@ if (! $this->compact): ?>
             $stateBadges = new StateBadges();
             $stateBadges
                 ->setUrl('monitoring/list/hosts')
+                ->setBaseFilter($baseFilter)
                 ->add(
                     StateBadges::STATE_UP,
                     $hostgroup->hosts_up,
@@ -147,6 +148,7 @@ if (! $this->compact): ?>
             $stateBadges = new StateBadges();
             $stateBadges
                 ->setUrl('monitoring/list/services')
+                ->setBaseFilter($baseFilter)
                 ->add(
                     StateBadges::STATE_OK,
                     $hostgroup->services_ok,
