@@ -4,6 +4,7 @@
 namespace Icinga\Module\Monitoring\Controllers;
 
 use Icinga\Data\Filter\Filter;
+use Icinga\Data\Filter\FilterEqual;
 use Icinga\Module\Monitoring\Controller;
 use Icinga\Module\Monitoring\Forms\Command\Object\AcknowledgeProblemCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\AddCommentCommandForm;
@@ -148,7 +149,9 @@ class ServicesController extends Controller
         $this->view->showDowntimesLink = Url::fromPath('monitoring/downtimes/show')
             ->setQueryString(
                 $this->serviceList->getObjectsInDowntime()
-                    ->objectsFilter()->toQueryString()
+                    ->objectsFilter()
+                        ->andFilter(new FilterEqual('object_type', '=', 'service'))
+                        ->toQueryString()
             );
         $this->view->commentsLink = Url::fromRequest()
             ->setPath('monitoring/list/comments');
