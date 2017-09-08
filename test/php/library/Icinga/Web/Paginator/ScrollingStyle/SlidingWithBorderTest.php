@@ -1,13 +1,13 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Web\Paginator\ScrollingStyle;
-
-require_once realpath(ICINGA_LIBDIR . '/Icinga/Web/Paginator/ScrollingStyle/SlidingWithBorder.php');
 
 use Mockery;
 use Zend_Paginator;
 use Icinga\Test\BaseTestCase;
+
+require_once realpath(BaseTestCase::$libDir . '/Web/Paginator/ScrollingStyle/SlidingWithBorder.php');
 
 class SlidingwithborderTest extends BaseTestCase
 {

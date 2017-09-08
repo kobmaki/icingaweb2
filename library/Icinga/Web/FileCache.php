@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web;
 
@@ -69,7 +69,6 @@ class FileCache
     public function store($file, $content)
     {
         if (! $this->enabled) {
-
             return false;
         }
 
@@ -87,26 +86,22 @@ class FileCache
     public function has($file, $newerThan = null)
     {
         if (! $this->enabled) {
-
             return false;
         }
 
         $filename = $this->filename($file);
 
         if (! file_exists($filename) || ! is_readable($filename)) {
-
             return false;
         }
 
         if ($newerThan === null) {
-
             return true;
         }
 
-        $info = stat($file);
+        $info = stat($filename);
 
         if ($info === false) {
-
             return false;
         }
 
@@ -204,6 +199,11 @@ class FileCache
         }
         if (! $match) {
             return false;
+        }
+
+        if (preg_match('/([0-9a-f]{8}-[0-9a-f]{8}-[0-9a-f]{8})-\w+/i', $match, $matches)) {
+            // Removes compression suffixes as our custom algorithm can't handle compressed cache files anyway
+            $match = $matches[1];
         }
 
         $etag = self::etagForFiles($files);

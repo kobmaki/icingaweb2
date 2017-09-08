@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Timeline;
 
@@ -200,7 +200,7 @@ class TimeLine implements IteratorAggregate
     }
 
     /**
-     * Return all known group types (identifiers) with their respective labels and colors as array
+     * Return all known group types (identifiers) with their respective labels and classess as array
      *
      * @return  array
      */
@@ -208,8 +208,8 @@ class TimeLine implements IteratorAggregate
     {
         $groupInfo = array();
         foreach ($this->identifiers as $name => $attributes) {
+            $groupInfo[$name]['class'] = $attributes['class'];
             $groupInfo[$name]['label'] = $attributes['label'];
-            $groupInfo[$name]['color'] = $attributes['color'];
         }
 
         return $groupInfo;
@@ -376,7 +376,9 @@ class TimeLine implements IteratorAggregate
         $range = $this->displayRange;
         return array_filter(
             $this->resultset,
-            function ($e) use ($range) { return $range->validateTime($e->time); }
+            function ($e) use ($range) {
+                return $range->validateTime($e->time);
+            }
         );
     }
 
@@ -394,7 +396,9 @@ class TimeLine implements IteratorAggregate
         $range = $this->forecastRange;
         return array_filter(
             $this->resultset,
-            function ($e) use ($range) { return $range->validateTime($e->time); }
+            function ($e) use ($range) {
+                return $range->validateTime($e->time);
+            }
         );
     }
 

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Response;
 
@@ -11,6 +11,11 @@ use Icinga\Web\Response;
  */
 class JsonResponse extends Response
 {
+    /**
+     * {@inheritdoc}
+     */
+    const DEFAULT_CONTENT_TYPE = 'application/json';
+
     /**
      * Status identifier for failed API calls due to an error on the server
      *
@@ -121,7 +126,7 @@ class JsonResponse extends Response
      */
     public function getFailData()
     {
-        return $this->failData;
+        return (! is_array($this->failData) || empty($this->failData)) ? null : $this->failData;
     }
 
     /**
@@ -173,24 +178,17 @@ class JsonResponse extends Response
         switch ($this->status) {
             case static::STATUS_ERROR:
                 $body['message'] = $this->getErrorMessage();
-                break;
             case static::STATUS_FAIL:
-                $body['data'] = $this->getFailData();
+                $failData = $this->getFailData();
+                if ($failData !== null || $this->status === static::STATUS_FAIL) {
+                    $body['data'] = $failData;
+                }
                 break;
             case static::STATUS_SUCCESS:
                 $body['data'] = $this->getSuccessData();
                 break;
         }
         echo json_encode($body, $this->getEncodingOptions());
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function sendHeaders()
-    {
-        $this->setHeader('Content-Type', 'application/json', true);
-        parent::sendHeaders();
     }
 
     /**

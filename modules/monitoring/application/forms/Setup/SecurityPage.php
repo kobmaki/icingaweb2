@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Setup;
 
@@ -22,5 +22,6 @@ class SecurityPage extends Form
         $securityConfigForm = new SecurityConfigForm();
         $securityConfigForm->createElements($formData);
         $this->addElements($securityConfigForm->getElements());
+        $this->getElement('protected_customvars')->setValue($securityConfigForm->getDefaultProtectedCustomvars());
     }
 }

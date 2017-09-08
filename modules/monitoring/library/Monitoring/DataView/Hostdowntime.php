@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\DataView;
 
@@ -24,6 +24,7 @@ class Hostdowntime extends DataView
             'downtime_is_fixed',
             'downtime_is_flexible',
             'downtime_is_in_effect',
+            'downtime_name',
             'downtime_scheduled_end',
             'downtime_scheduled_start',
             'downtime_start',

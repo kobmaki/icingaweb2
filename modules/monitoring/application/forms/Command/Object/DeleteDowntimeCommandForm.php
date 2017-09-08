@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Command\Object;
 
@@ -70,6 +70,13 @@ class DeleteDowntimeCommandForm extends CommandForm
                 ),
                 array(
                     'hidden',
+                    'downtime_name',
+                    array(
+                        'decorators' => array('ViewHelper')
+                    )
+                ),
+                array(
+                    'hidden',
                     'redirect',
                     array(
                         'decorators' => array('ViewHelper')
@@ -86,8 +93,10 @@ class DeleteDowntimeCommandForm extends CommandForm
     public function onSuccess()
     {
         $cmd = new DeleteDowntimeCommand();
-        $cmd->setDowntimeId($this->getElement('downtime_id')->getValue());
-        $cmd->setIsService($this->getElement('downtime_is_service')->getValue());
+        $cmd
+            ->setDowntimeId($this->getElement('downtime_id')->getValue())
+            ->setDowntimeName($this->getElement('downtime_name')->getValue())
+            ->setIsService($this->getElement('downtime_is_service')->getValue());
         $this->getTransport($this->request)->send($cmd);
 
         $redirect = $this->getElement('redirect')->getValue();

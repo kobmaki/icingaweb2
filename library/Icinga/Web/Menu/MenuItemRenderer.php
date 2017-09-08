@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Menu;
 
@@ -80,7 +80,9 @@ class MenuItemRenderer
             '<a href="%s"%s>%s%s<span></span></a>',
             $menu->getUrl() ? : '#',
             $attributes,
-            $menu->getIcon() ? '<img aria-hidden="true" src="' . Url::fromPath($menu->getIcon()) . '" class="icon" /> ' : '',
+            $menu->getIcon()
+                ? '<img aria-hidden="true" src="' . Url::fromPath($menu->getIcon()) . '" class="icon" /> '
+                : '',
             $this->getView()->escape($menu->getTitle())
         );
     }

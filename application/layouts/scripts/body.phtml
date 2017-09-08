@@ -16,8 +16,13 @@ if ($this->layout()->autorefreshInterval) {
     $refresh = ' data-icinga-refresh="' . $this->layout()->autorefreshInterval . '"';
 }
 
+$inlineLayoutScript = $this->layout()->inlineLayout . '.phtml';
+
 ?>
 <div id="header">
+  <div id="announcements" class="container">
+    <?= $this->widget('announcements') ?>
+  </div>
   <div id="header-logo-container">
     <?= $this->qlink(
       '',
@@ -26,8 +31,7 @@ if ($this->layout()->autorefreshInterval) {
       array(
         'aria-hidden'       => 'true',
         'data-base-target'  => '_main',
-        'id'                => 'header-logo',
-        'tabindex'          => -1
+        'id'                => 'header-logo'
       )
     ); ?>
   </div>
@@ -39,7 +43,7 @@ if ($this->layout()->autorefreshInterval) {
 <?php endif ?>
 <div id="main" role="main">
   <div id="col1" class="container<?= $moduleClass ?>"<?php if ($moduleName): ?> data-icinga-module="<?= $moduleName ?>" <?php endif ?> data-icinga-url="<?= Url::fromRequest()->without('renderLayout'); ?>"<?= $refresh; ?> style="display: block">
-    <?= $this->render('inline.phtml') ?>
+    <?= $this->render($inlineLayoutScript) ?>
   </div>
   <div id="col2" class="container">
   </div>
@@ -47,7 +51,7 @@ if ($this->layout()->autorefreshInterval) {
   </div>
 </div>
 <div id="footer">
-  <ul id="notifications"><?php
+  <ul role="alert" id="notifications"><?php
 
     $notifications = Notification::getInstance();
     if ($notifications->hasMessages()) {

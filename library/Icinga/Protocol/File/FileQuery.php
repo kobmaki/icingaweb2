@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\File;
 
@@ -33,7 +33,8 @@ class FileQuery extends SimpleQuery
      * Nothing to do here
      */
     public function applyFilter(Filter $filter)
-    {}
+    {
+    }
 
     /**
      * Sort query result chronological

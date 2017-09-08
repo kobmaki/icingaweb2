@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Timeline;
 
@@ -55,11 +55,11 @@ class TimeEntry
     protected $label;
 
     /**
-     * The color of this group
+     * The CSS class of the entry
      *
      * @var string
      */
-    protected $color;
+    protected $class;
 
     /**
      * Return a new TimeEntry object with the given attributes being set
@@ -209,22 +209,25 @@ class TimeEntry
     }
 
     /**
-     * Set this group's color
-     *
-     * @param   string  $color  The color to set. (The css name or hex-code)
-     */
-    public function setColor($color)
-    {
-        $this->color = $color;
-    }
-
-    /**
-     * Get the color of this group
+     * Get the CSS class
      *
      * @return  string
      */
-    public function getColor()
+    public function getClass()
     {
-        return $this->color;
+        return $this->class;
+    }
+
+    /**
+     * Set the CSS class
+     *
+     * @param   string  $class
+     *
+     * @return  $this
+     */
+    public function setClass($class)
+    {
+        $this->class = $class;
+        return $this;
     }
 }

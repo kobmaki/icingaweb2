@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Application;
 
@@ -137,11 +137,8 @@ class ClassLoader
         $namespace = $this->extractModuleNamespace($class);
 
         if ($this->hasNamespace($namespace)) {
-
             return $this->buildClassFilename($class, $namespace);
-
         } elseif (! $modules->loadedAllEnabledModules()) {
-
             $moduleName = $this->extractModuleName($class);
 
             if ($modules->hasEnabled($moduleName)) {
@@ -247,7 +244,7 @@ class ClassLoader
     /**
      * Whether given prefix (Forms, Controllers...) makes part of "application"
      *
-     * @param  string $prefix 
+     * @param  string $prefix
      *
      * @return boolean
      */
@@ -291,7 +288,12 @@ class ClassLoader
         // Return as fast as possible if we already did so.
         if (substr($class, 0, 5) === 'Zend_') {
             if (! $this->gotZend) {
-                $this->requireZendAutoloader();
+                $zendLoader = $this->requireZendAutoloader();
+                if (version_compare(PHP_VERSION, '7.0.0') >= 0) {
+                    // PHP7 seems to remember the autoload function stack before auto-loading. Thus
+                    // autoload functions registered during autoload never get called
+                    return $zendLoader::autoload($class);
+                }
             }
             return false;
         }

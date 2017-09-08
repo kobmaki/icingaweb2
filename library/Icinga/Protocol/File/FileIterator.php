@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\File;
 
@@ -67,7 +67,7 @@ class FileIterator extends EnumeratingFilterIterator
 
         if ($matched === false) {
             throw new FileReaderException('Failed parsing regular expression!');
-        } else if ($matched === 1) {
+        } elseif ($matched === 1) {
             foreach ($data as $key => $value) {
                 if (is_int($key)) {
                     unset($data[$key]);

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Clicommands;
 
@@ -55,6 +55,9 @@ class ListCommand extends Command
             $query->limit($limit, $this->params->shift('offset'));
         }
         foreach ($this->params->getParams() as $col => $filter) {
+            if (strtolower($col) === 'problems') {
+                $col = 'service_problem';
+            }
             $query->where($col, $filter);
         }
         // $query->applyFilters($this->params->getParams());
@@ -73,7 +76,7 @@ class ListCommand extends Command
     protected function showFormatted($query, $format, $columns)
     {
         $query = $query->getQuery();
-        switch($format) {
+        switch ($format) {
             case 'json':
                 echo json_encode($query->fetchAll());
                 break;
@@ -291,9 +294,9 @@ class ListCommand extends Command
             }
 
             $wrappedOutput = wordwrap(
-                    preg_replace('~\@{3,}~', '@@@', $row->service_output),
-                    $maxCols - 13
-                ) . "\n";
+                preg_replace('~\@{3,}~', '@@@', $row->service_output),
+                $maxCols - 13
+            ) . "\n";
             $out .= sprintf(
                 " %1s─ %s%s (%s)",
                 $leaf,
@@ -333,6 +336,4 @@ class ListCommand extends Command
             $last = $circle;
         }
     }
-
 }
-

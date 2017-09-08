@@ -1,8 +1,10 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Clicommands;
 
+use Icinga\Application\Logger;
+use Icinga\Application\Modules\Manager;
 use Icinga\Cli\Command;
 
 /**
@@ -14,6 +16,9 @@ use Icinga\Cli\Command;
  */
 class ModuleCommand extends Command
 {
+    /**
+     * @var Manager
+     */
     protected $modules;
 
     public function init()
@@ -109,7 +114,12 @@ class ModuleCommand extends Command
         if (! $module || $this->hasRemainingParams()) {
             return $this->showUsage();
         }
-        $this->modules->disableModule($module);
+
+        if ($this->modules->hasEnabled($module)) {
+            $this->modules->disableModule($module);
+        } else {
+            Logger::info('Module "%s" is already disabled', $module);
+        }
     }
 
     /**

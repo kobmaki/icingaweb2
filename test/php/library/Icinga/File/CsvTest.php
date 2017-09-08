@@ -1,9 +1,9 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\File;
 
-use Mockery;
+use Icinga\Data\DataArray\ArrayDatasource;
 use Icinga\File\Csv;
 use Icinga\Test\BaseTestCase;
 
@@ -11,19 +11,15 @@ class CsvTest extends BaseTestCase
 {
     public function testWhetherValidCsvIsRendered()
     {
-        $queryMock = Mockery::mock(
-            'Icinga\Data\SimpleQuery',
-            array(
-                'getQuery->fetchAll' => array(
-                    array('col1' => 'val1', 'col2' => 'val2', 'col3' => 'val3', 'col4' => 'val4'),
-                    array('col1' => 'val5', 'col2' => 'val6', 'col3' => 'val7', 'col4' => 'val8')
-                )
-            )
-        );
-        $csv = Csv::fromQuery($queryMock);
+        $data = new ArrayDatasource(array(
+            array('col1' => 'val1', 'col2' => 'val2', 'col3' => 'val3', 'col4' => 'val4'),
+            array('col1' => 'val5', 'col2' => 'val6', 'col3' => 'val7', 'col4' => 'val8')
+        ));
+
+        $csv = Csv::fromQuery($data->select());
 
         $this->assertEquals(
-            join(
+            implode(
                 "\r\n",
                 array(
                     'col1,col2,col3,col4',

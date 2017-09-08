@@ -30,8 +30,8 @@
                             $acknowledgeLink,
                             null,
                             array(
-                                'icon' => 'ok',
-                                'class' =>  'action-link'
+                                'class' => 'action-link',
+                                'icon'  => 'check'
                             )
                         ) ?> </td>
                 </tr>
@@ -49,7 +49,7 @@
                         ) ?>
                     </th>
                     <td>
-                        <?= $removeAckForm ?>
+                        <?= $removeAckForm->setLabelEnabled(true) ?>
                     </td>
                 </tr>
             <?php endif ?>
@@ -62,8 +62,8 @@
                         $addCommentLink,
                         null,
                         array(
-                            'icon' => 'comment',
-                            'class' =>  'action-link'
+                            'class' => 'action-link',
+                            'icon'  => 'comment-empty'
                         )
                     ) ?>
                 </td>
@@ -147,8 +147,8 @@
                             $sendCustomNotificationLink,
                             null,
                             array(
-                                'icon' => 'bell-alt',
-                                'class' => 'action-link'
+                                'class' => 'action-link',
+                                'icon'  => 'bell'
                             )
                         ) ?>
                     </td>
@@ -169,17 +169,19 @@
                         $processCheckResultAllLink,
                         null,
                         array(
-                            'icon' => 'reply',
-                            'class' => 'action-link'
+                            'class' => 'action-link',
+                            'icon'  => 'edit'
                         )
                     ) ?>
                 </td>
             </tr>
 
-            <tr>
-                <th> <?= $this->translate('Schedule Check') ?> </th>
-                <td> <?= $checkNowForm ?> </td>
-            </tr>
+            <?php if (isset($checkNowForm)): // Form is unset if the current user lacks the respective permission ?>
+                <tr>
+                    <th> <?= $this->translate('Schedule Check') ?> </th>
+                    <td> <?= $checkNowForm ?> </td>
+                </tr>
+            <?php endif ?>
 
             <tr>
                 <th></th>
@@ -189,13 +191,15 @@
                         $rescheduleAllLink,
                         null,
                         array(
-                            'icon' => 'reschedule',
-                            'class' => 'action-link'
+                            'class' => 'action-link',
+                            'icon'  => 'calendar-empty'
                         )
                     ) ?>
                 </td>
             </tr>
             </tbody>
         </table>
+        <h2><?= $this->translate('Feature Commands') ?></h2>
+        <?= $toggleFeaturesForm ?>
     <?php endif ?>
 </div>

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Chart;
 
@@ -193,14 +193,13 @@ class GridChart extends Chart
     private function initTooltips($data)
     {
         foreach ($data as &$graph) {
-            foreach  ($graph['data'] as $x => $point) {
+            foreach ($graph['data'] as $x => $point) {
                 if (!array_key_exists($x, $this->tooltips)) {
                     $this->tooltips[$x] = new Tooltip(
                         array(
                             'color' => $graph['color'],
 
                         )
-
                     );
                 }
                 $this->tooltips[$x]->addDataPoint($point);

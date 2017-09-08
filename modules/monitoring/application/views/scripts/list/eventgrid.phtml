@@ -4,12 +4,8 @@ use Icinga\Web\Widget\Chart\HistoryColorGrid;
 
 if (! $this->compact): ?>
 <div class="controls">
-  <?= $this->tabs; ?>
-  <?= $this->sortBox; ?>
-  <?= $this->limiter; ?>
-  <?= $this->paginator; ?>
-  <?= $this->filterEditor; ?>
-  <?= $form; ?>
+    <?= $this->tabs ?>
+    <?= $this->form ?>
 </div>
 <?php endif ?>
 <div class="content" data-base-target="_next">
@@ -68,7 +64,7 @@ foreach ($summary as $entry) {
         Filter::expression('timestamp', '<', strtotime($day . ' 23:59:59')),
         Filter::expression('timestamp', '>', strtotime($day . ' 00:00:00')),
         $form->getFilter(),
-        Filter::fromQueryString($this->url()->getParams()->toString())
+        $filter
     );
     $data[$day] = array(
         'value'   => $value,

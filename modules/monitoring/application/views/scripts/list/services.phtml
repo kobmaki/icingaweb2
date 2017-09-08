@@ -5,14 +5,10 @@ use Icinga\Module\Monitoring\Object\Service;
 if (! $this->compact): ?>
 <div class="controls">
     <?= $this->tabs ?>
-    <div class="grid">
-        <?= $this->render('list/components/servicesummary.phtml') ?>
-        <?= $this->render('list/components/selectioninfo.phtml') ?>
-    </div>
-    <div class="grid">
-        <?= $this->sortBox ?>
+    <?= $this->paginator ?>
+    <div class="sort-controls-container">
         <?= $this->limiter ?>
-        <?= $this->paginator ?>
+        <?= $this->sortBox ?>
     </div>
     <?= $this->filterEditor ?>
 </div>
@@ -84,15 +80,13 @@ if (! $this->compact): ?>
                             'class' => 'rowaction'
                         )
                     ) ?>
-                    <span class="state-icons"><?= implode(' ', $this->serviceFlags($service)) ?></span>
+                    <span class="state-icons"><?= $this->serviceFlags($service) ?></span>
                 </div>
                 <div class="overview-plugin-output-container">
                     <div class="overview-performance-data">
                         <?= $this->perfdata($service->service_perfdata, true, 5) ?>
                     </div>
-                    <p class="overview-plugin-output">
-                        <?= $this->pluginOutput($this->ellipsis($service->service_output, 10000), true) ?>
-                    </p>
+                    <p class="overview-plugin-output"><?= $this->pluginOutput($this->ellipsis($service->service_output, 10000), true) ?></p>
                 </div>
             </td>
         <?php foreach($this->addColumns as $col): ?>
@@ -103,16 +97,23 @@ if (! $this->compact): ?>
     </tbody>
     </table>
 <?php if ($services->hasMore()): ?>
-    <div class="text-right">
-        <?= $this->qlink(
-            $this->translate('Show More'),
-            $this->url()->without(array('view', 'limit')),
-            null,
-            array(
-                'data-base-target'  => '_next',
-                'class'             => 'action-link'
-            )
-        ) ?>
-    </div>
+<div class="action-links">
+    <?= $this->qlink(
+        $this->translate('Show More'),
+        $this->url()->without(array('view', 'limit')),
+        null,
+        array(
+            'class'             => 'action-link',
+            'data-base-target'  => '_next'
+        )
+    ) ?>
+</div>
 <?php endif ?>
 </div>
+<?php if (! $this->compact): ?>
+<div class="monitoring-statusbar-ghost dont-print"></div>
+<div class="monitoring-statusbar dont-print">
+    <?= $this->render('list/components/servicesummary.phtml') ?>
+    <?= $this->render('list/components/selectioninfo.phtml') ?>
+</div>
+<?php endif ?>

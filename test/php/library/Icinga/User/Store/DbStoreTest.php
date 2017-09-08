@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\User\Preferences\Store;
 
@@ -43,17 +43,17 @@ class FaultyDatabaseMock extends DatabaseMock
 {
     public function insert($table, $row)
     {
-        throw new NotWritableError();
+        throw new NotWritableError('Mocked insert');
     }
 
     public function update($table, $columns, $where)
     {
-        throw new NotWritableError();
+        throw new NotWritableError('Mocked update');
     }
 
     public function delete($table, $where)
     {
-        throw new NotWritableError();
+        throw new NotWritableError('Mocked delete');
     }
 }
 

@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /**
  * Icinga.Timer
@@ -41,6 +41,8 @@
 
 
         this.lastRuntime = [];
+
+        this.isRunning = false;
     };
 
     Icinga.Timer.prototype = {
@@ -49,8 +51,16 @@
          * The initialization function starts our ticker
          */
         initialize: function () {
-            var self = this;
-            this.ticker = setInterval(function () { self.tick(); }, this.interval);
+            this.isRunning = true;
+
+            var _this = this;
+            var f = function () {
+                if (_this.isRunning) {
+                    _this.tick();
+                    setTimeout(f, _this.interval);
+                }
+            };
+            f();
         },
 
         /**
@@ -112,10 +122,7 @@
          * Our destroy function will clean up everything. Unused right now.
          */
         destroy: function () {
-
-            if (this.ticker !== null) {
-                clearInterval(this.ticker);
-            }
+            this.isRunning = false;
 
             this.icinga = null;
             $.each(this.observers, function (idx, observer) {

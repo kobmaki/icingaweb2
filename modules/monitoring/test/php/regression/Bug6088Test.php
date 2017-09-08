@@ -1,12 +1,11 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Regression;
 
 use Icinga\Test\BaseTestCase;
 use Icinga\Module\Monitoring\Command\IcingaCommand;
 use Icinga\Module\Monitoring\Command\Renderer\IcingaCommandFileCommandRenderer;
-
 
 /**
  * A command that has a hardcoded parameter with newlines
@@ -43,7 +42,7 @@ class Bug6088CommandFileCommandRenderer extends IcingaCommandFileCommandRenderer
  *
  * Multi-line comments don't work
  *
- * @see https://dev.icinga.org/issues/6088
+ * @see https://dev.icinga.com/issues/6088
  */
 class Bug6088Test extends BaseTestCase
 {

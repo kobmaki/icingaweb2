@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Controllers;
 
@@ -46,6 +46,7 @@ class CommentsController extends Controller
             'type'       => 'comment_type',
             'persistent' => 'comment_is_persistent',
             'expiration' => 'comment_expiration',
+            'name'       => 'comment_name',
             'host_name',
             'service_description',
             'host_display_name',
@@ -58,7 +59,7 @@ class CommentsController extends Controller
         $this->getTabs()->add(
             'comments',
             array(
-                'icon'  => 'comment',
+                'icon'  => 'comment-empty',
                 'label' => $this->translate('Comments') . sprintf(' (%d)', $query->count()),
                 'title' => $this->translate(
                     'Display detailed information about multiple comments.'

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Setup;
 
@@ -18,7 +18,9 @@ class WelcomePage extends Form
             'note',
             'welcome',
             array(
-                'value'         => $this->translate('Welcome to the configuration of the monitoring module for Icinga Web 2!'),
+                'value'         => $this->translate(
+                    'Welcome to the configuration of the monitoring module for Icinga Web 2!'
+                ),
                 'decorators'    => array(
                     'ViewHelper',
                     array('HtmlTag', array('tag' => 'h2'))

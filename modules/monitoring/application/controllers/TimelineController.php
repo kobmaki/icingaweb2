@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Controllers;
 
@@ -37,7 +37,8 @@ class TimelineController extends Controller
         $timeline = new TimeLine(
             $this->applyRestriction(
                 'monitoring/filter/objects',
-                $this->backend->select()->from('eventhistory',
+                $this->backend->select()->from(
+                    'eventhistory',
                     array(
                         'name' => 'type',
                         'time' => 'timestamp'
@@ -46,34 +47,34 @@ class TimelineController extends Controller
             ),
             array(
                 'notify'        => array(
+                    'class'     => 'timeline-notification',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Notifications'),
-                    'color'     => '#3a71ea'
+                    'label'     => mt('monitoring', 'Notifications')
                 ),
                 'hard_state'    => array(
+                    'class'     => 'timeline-hard-state',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Hard state changes'),
-                    'color'     => '#ff7000'
+                    'label'     => mt('monitoring', 'Hard state changes')
                 ),
                 'comment'       => array(
+                    'class'     => 'timeline-comment',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Comments'),
-                    'color'     => '#79bdba'
+                    'label'     => mt('monitoring', 'Comments')
                 ),
                 'ack'           => array(
+                    'class'     => 'timeline-ack',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Acknowledgements'),
-                    'color'     => '#a2721d'
+                    'label'     => mt('monitoring', 'Acknowledgements')
                 ),
                 'dt_start'      => array(
+                    'class'     => 'timeline-downtime-start',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Started downtimes'),
-                    'color'     => '#8e8e8e'
+                    'label'     => mt('monitoring', 'Started downtimes')
                 ),
                 'dt_end'        => array(
+                    'class'     => 'timeline-downtime-end',
                     'detailUrl' => $detailUrl,
-                    'label'     => mt('monitoring', 'Ended downtimes'),
-                    'color'     => '#d5d6ad'
+                    'label'     => mt('monitoring', 'Ended downtimes')
                 )
             )
         );
@@ -120,8 +121,7 @@ class TimelineController extends Controller
      */
     private function getTimelineInterval()
     {
-        switch ($this->view->intervalBox->getInterval())
-        {
+        switch ($this->view->intervalBox->getInterval()) {
             case '1d':
                 return new DateInterval('P1D');
             case '1w':
@@ -142,8 +142,7 @@ class TimelineController extends Controller
      */
     private function getIntervalFormat()
     {
-        switch ($this->view->intervalBox->getInterval())
-        {
+        switch ($this->view->intervalBox->getInterval()) {
             case '1d':
                 return $this->getDateFormat();
             case '1w':
@@ -166,8 +165,7 @@ class TimelineController extends Controller
      */
     private function getPreloadInterval(DateTime $dateTime)
     {
-        switch ($this->view->intervalBox->getInterval())
-        {
+        switch ($this->view->intervalBox->getInterval()) {
             case '1d':
                 return DateInterval::createFromDateString('1 week -1 second');
             case '1w':
@@ -196,8 +194,7 @@ class TimelineController extends Controller
      */
     private function extrapolateDateTime(DateTime &$dateTime)
     {
-        switch ($this->view->intervalBox->getInterval())
-        {
+        switch ($this->view->intervalBox->getInterval()) {
             case '1d':
                 $dateTime->setTimestamp(strtotime('tomorrow', $dateTime->getTimestamp()) - 1);
                 break;

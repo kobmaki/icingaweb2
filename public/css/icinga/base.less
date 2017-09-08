@@ -1,4 +1,7 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
+
+// Black colors
+@black: #535353;
 
 // Gray colors
 @gray: #7F7F7F;
@@ -8,25 +11,34 @@
 
 // Icinga colors
 @icinga-blue: #0095BF;
-@icinga-blue-dark: #AA95BF;
 @color-ok: #44bb77;
+@color-up: @color-ok;
 @color-warning: #ffaa44;
 @color-warning-handled: #ffcc66;
 @color-critical: #ff5566;
 @color-critical-handled: #ff99aa;
+@color-down: @color-critical;
+@color-down-handled: @color-critical-handled;
 @color-unknown: #aa44ff;
 @color-unknown-handled: #cc77ff;
-@color-unreachable: #aa44ff;
-@color-unreachable-handled: #cc77ff;
+@color-unreachable: @color-unknown;
+@color-unreachable-handled: @color-unknown-handled;
 @color-pending: #77aaff;
+
+// Notification colors
+@color-notification-error: @color-critical;
+@color-notification-info: @color-pending;
+@color-notification-success: #fe6;
+@color-notification-warning: @color-warning-handled;
 
 // Background color for <body>
 @body-bg-color: #fff;
 
 // Text colors
-@text-color: #535353;
+@text-color: @black;
 @text-color-inverted: @body-bg-color;
 @text-color-light: @gray;
+@text-color-on-icinga-blue: @body-bg-color;
 
 // Text color on <a>
 @link-color: @text-color;
@@ -35,7 +47,7 @@
 @tr-hover-color: #F5FDFF;
 
 // Font families
-@font-family: Calibri, Helvetica, sans-serif;
+@font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
 @font-family-fixed: "Liberation Mono", "Lucida Console", Courier, monospace;
 @font-family-wide: Tahoma, Verdana, sans-serif;
 
@@ -71,13 +83,16 @@ a {
   color: inherit;
   text-decoration: none;
 
-  &:focus {
-    outline-color: @icinga-blue;
-  }
-
   &:hover {
     text-decoration: underline;
   }
+}
+
+a:focus,
+button:focus,
+input[type="checkbox"]:focus {
+  outline: 3px solid fade(@icinga-blue, 50%);
+  outline-offset: 1px;
 }
 
 // Default margin for block text
@@ -154,10 +169,11 @@ td, th {
 
 // Styles for when containers are loading. JS will remove this once the containers are ready
 .impact {
-  .active > a, // Remove > a once .tabs layout has been fixed
-  .controls,
-  .content {
     .transition(background-color 2s 1s linear !important);
     background-color: @gray-lighter !important;
-  }
+}
+
+.impact > .controls, .impact li.active a {
+    .transition(background-color 2s 1s linear !important);
+    background-color: @gray-lighter !important;
 }

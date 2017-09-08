@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Web\Widget;
 
@@ -200,7 +200,12 @@ class StateBadges extends AbstractWidget
      * @return  $this
      */
     public function add(
-        $state, $count, array $filter, $translateSingular, $translatePlural, array $translateArgs = array()
+        $state,
+        $count,
+        array $filter,
+        $translateSingular,
+        $translatePlural,
+        array $translateArgs = array()
     ) {
         $this->badges[$state] = (object) array(
             'count'             => (int) $count,
@@ -257,6 +262,7 @@ class StateBadges extends AbstractWidget
             $groupItem = new NavigationItem(
                 uniqid(),
                 array(
+                    'cssClass'  => 'state-badge-group',
                     'label'     => '',
                     'priority'  => $this->priority++
                 )
@@ -320,7 +326,10 @@ class StateBadges extends AbstractWidget
                 array(static::STATE_UNREACHABLE, static::STATE_UNREACHABLE_HANDLED),
                 $badges
             )
-            ->createBadge(static::STATE_UNKNOWN, $badges)
+            ->createBadgeGroup(
+                array(static::STATE_UNKNOWN, static::STATE_UNKNOWN_HANDLED),
+                $badges
+            )
             ->createBadge(static::STATE_OK, $badges)
             ->createBadge(static::STATE_UP, $badges)
             ->createBadge(static::STATE_PENDING, $badges);

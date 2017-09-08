@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\File\Ini\Dom;
 
@@ -73,7 +73,7 @@ class Document
      */
     public function removeSection($name)
     {
-        unset ($this->sections[trim($name)]);
+        unset($this->sections[trim($name)]);
     }
 
     /**

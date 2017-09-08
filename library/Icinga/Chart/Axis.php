@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Chart;
 
@@ -184,7 +184,6 @@ class Axis implements Drawable
 
         $i = 0;
         foreach ($this->xUnit as $label => $pos) {
-
             if ($i % $ticks === 0) {
                 /*
                 $tick = new Line($pos, 100, $pos, 101);
@@ -280,7 +279,7 @@ class Axis implements Drawable
         if ($this->yLabel || $this->xLabel) {
             if ($this->yLabel && $this->xLabel) {
                 $txt = $this->yLabel . ' / ' . $this->xLabel;
-            } else if ($this->xLabel) {
+            } elseif ($this->xLabel) {
                 $txt = $this->xLabel;
             } else {
                 $txt = $this->yLabel;

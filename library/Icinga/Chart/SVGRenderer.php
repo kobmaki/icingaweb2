@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Chart;
 
@@ -161,7 +161,7 @@ class SVGRenderer
         if ($this->preserveAspectRatio) {
             $svg->setAttribute(
                 'preserveAspectRatio',
-                sprintf (
+                sprintf(
                     '%s%s %s',
                     $this->xAspectRatio,
                     $this->yAspectRatio,
@@ -182,12 +182,12 @@ class SVGRenderer
      * @param         $title        The title text
      * @param         $description  The description text
      */
-    private function addAriaDescription (DOMNode $svg, $titleText, $descriptionText)
+    private function addAriaDescription(DOMNode $svg, $titleText, $descriptionText)
     {
         $doc = $svg->ownerDocument;
 
         $titleId = $descId = '';
-        if (isset ($this->ariaTitle)) {
+        if (isset($this->ariaTitle)) {
             $titleId = 'aria-title-' . $this->stripNonAlphanumeric($titleText);
             $title = $doc->createElement('title');
             $title->setAttribute('id', $titleId);
@@ -196,7 +196,7 @@ class SVGRenderer
             $svg->appendChild($title);
         }
 
-        if (isset ($this->ariaDescription)) {
+        if (isset($this->ariaDescription)) {
             $descId = 'aria-desc-' . $this->stripNonAlphanumeric($descriptionText);
             $desc = $doc->createElement('desc');
             $desc->setAttribute('id', $descId);

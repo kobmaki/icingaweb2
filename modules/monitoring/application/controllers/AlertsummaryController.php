@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Controllers;
 
@@ -638,7 +638,7 @@ class AlertsummaryController extends Controller
             case '1d':
                 return $this->translate('Hour');
                 break;
-            case '1w';
+            case '1w':
                 return $this->translate('Day');
                 break;
             case '1m':

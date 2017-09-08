@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /**
  * Icinga.UI
@@ -99,12 +99,15 @@
             $('link').each(function() {
                 var $oldLink = $(this);
                 if ($oldLink.hasAttr('type') && $oldLink.attr('type').indexOf('css') > -1) {
+                    var base = location.protocol + '//' + location.host;
+                    var url = icinga.utils.addUrlParams(
+                        $(this).attr('href'),
+                        { id: new Date().getTime() }
+                    );
+
                     var $newLink = $oldLink.clone().attr(
                         'href',
-                        icinga.utils.addUrlParams(
-                            $(this).attr('href'),
-                            { id: new Date().getTime() }
-                        )
+                        base + '/' + url.replace(/^\//, '')
                     ).on('load', function() {
                         icinga.ui.fixControls();
                         $oldLink.remove();
@@ -132,17 +135,21 @@
         /**
          * Focus the given element and scroll to its position
          *
-         * @param   {string}    element     The name or id of the element to focus
-         * @param   {object}    $container  The container containing the element
+         * @param   {string}    element         The name or id of the element to focus
+         * @param   {object}    [$container]    The container containing the element
          */
         focusElement: function(element, $container) {
-            var $element = $('#' + element, $container);
+            var $element = $('#' + element);
 
             if (! $element.length) {
                 // The name attribute is actually deprecated, on anchor tags,
                 // but we'll possibly handle links from another source
                 // (module etc) so that's used as a fallback
-                $element = $('[name="' + element.replace(/'/, '\\\'') + '"]', $container);
+                if ($container && $container.length) {
+                    $element = $container.find('[name="' + element.replace(/'/, '\\\'') + '"]');
+                } else {
+                    $element = $('[name="' + element.replace(/'/, '\\\'') + '"]');
+                }
             }
 
             if ($element.length) {
@@ -151,8 +158,11 @@
                 }
 
                 $element.focus();
-                $container.scrollTop(0);
-                $container.scrollTop($element.first().position().top);
+
+                if ($container && $container.length) {
+                    $container.scrollTop(0);
+                    $container.scrollTop($element.first().position().top);
+                }
             }
         },
 
@@ -201,16 +211,16 @@
          * Our window got resized, let's fix our UI
          */
         onWindowResize: function (event) {
-            var self = event.data.self;
+            var _this = event.data.self;
 
-            if (self.layoutHasBeenChanged()) {
-                self.icinga.logger.info(
+            if (_this.layoutHasBeenChanged()) {
+                _this.icinga.logger.info(
                     'Layout change detected, switching to',
-                    self.currentLayout
+                    _this.currentLayout
                 );
             }
-            self.fixControls();
-            self.refreshDebug();
+            _this.fixControls();
+            _this.refreshDebug();
         },
 
         /**
@@ -262,9 +272,8 @@
             this.icinga.logger.debug('Switching to single col');
             $('#layout').removeClass('twocols');
             this.closeContainer($('#col2'));
-            this.disableCloseButtons();
-
             // one-column layouts never have any selection active
+            $('#col1').removeData('icinga-actiontable-former-href');
             this.icinga.behaviors.actiontable.clearAll();
         },
 
@@ -274,6 +283,7 @@
             $c.removeData('lastUpdate');
             $c.removeData('icingaModule');
             this.icinga.loader.stopPendingRequestsFor($c);
+            $c.trigger('close-column');
             $c.html('');
             this.fixControls();
         },
@@ -283,7 +293,6 @@
             this.icinga.logger.debug('Switching to double col');
             $('#layout').addClass('twocols');
             this.fixControls();
-            this.enableCloseButtons();
         },
 
         getAvailableColumnSpace: function () {
@@ -355,7 +364,7 @@
                 if (loading === '') {
                     loading = '<br />Loading:<br />';
                 }
-                loading += el + ' => ' + req.url;
+                loading += el + ' => ' + encodeURI(req.url);
             });
 
             $('#responsive-debug').html(
@@ -450,7 +459,6 @@
          * Initialize all TriStateCheckboxes in the given html
          */
         initializeTriStates: function ($html) {
-            var self = this;
             $('div.tristate', $html).each(function(index, item) {
                 var $target  = $(item);
 
@@ -501,35 +509,6 @@
             }
         },
 
-        initializeControls: function (parent) {
-            if ($(parent).closest('.dashboard').length || $('#layout').hasClass('fullscreen-layout')) {
-                return;
-            }
-
-            $('.controls', parent).each(function (idx, el) {
-                var $el = $(el);
-
-                if (! $el.next('.fake-controls').length) {
-
-                    var newdiv = $('<div class="fake-controls"></div>');
-                    newdiv.css({
-                        height: $el.css('height')
-                    });
-                    $el.after(newdiv);
-                }
-            });
-
-            this.fixControls(parent);
-        },
-
-        disableCloseButtons: function () {
-            $('a.close-toggle').hide();
-        },
-
-        enableCloseButtons: function () {
-            $('a.close-toggle').show();
-        },
-
         /**
          * Toggle mobile menu
          *
@@ -559,26 +538,51 @@
             }
         },
 
-        fixControls: function ($parent) {
+        initializeControls: function(container) {
+            var $container = $(container);
+
+            if ($container.parent('.dashboard').length || $('#layout').hasClass('fullscreen-layout')) {
+                return;
+            }
+
+            $container.find('.controls').each(function() {
+                var $controls = $(this);
+                if (! $controls.next('.fake-controls').length) {
+                    var $tabs = $controls.find('.tabs', $controls);
+                    if ($tabs.length && $controls.children().length > 1 && ! $tabs.next('.tabs-spacer').length) {
+                        $tabs.after($('<div class="tabs-spacer"></div>'));
+                    }
+                    var $fakeControls = $('<div class="fake-controls"></div>');
+                    $fakeControls.height($controls.height()).css({
+                        display: 'block'
+                    });
+                    $controls.css({
+                        position: 'fixed'
+                    }).after($fakeControls);
+                }
+            });
+
+            this.fixControls($container);
+        },
+
+        fixControls: function($container) {
             var $layout = $('#layout');
 
             if ($layout.hasClass('fullscreen-layout')) {
                 return;
             }
 
-            if (typeof $parent === 'undefined') {
+            if (typeof $container === 'undefined') {
                 var $header = $('#header');
                 var $headerLogo = $('#header-logo');
                 var $main = $('#main');
                 var $search = $('#search');
                 var $sidebar = $('#sidebar');
 
-                $header.css({
-                    height: 'auto'
-                });
+                $header.css({ height: 'auto'});
 
                 if ($layout.hasClass('minimal-layout')) {
-                    if (! this.mobileMenu) {
+                    if (! this.mobileMenu && $sidebar.length) {
                         $header.css({
                             top: $sidebar.outerHeight() + 'px'
                         });
@@ -590,18 +594,12 @@
                             zIndex: 2
                         });
                         $sidebar
-                            .css({
-                                paddingBottom: 32,
-                                top: 0,
-                                zIndex: 3
-                            })
-                            .on('click', this.toggleMobileMenu)
+                            .on(
+                                'click',
+                                this.toggleMobileMenu
+                            )
                             .prepend(
-                                $('<i id="mobile-menu-toggle" class="icon-menu"></i>').css({
-                                    cursor: 'pointer',
-                                    display: 'block',
-                                    height: '32px'
-                                })
+                                $('<div id="mobile-menu-toggle"><button><i class="icon-menu"></i></button></div>')
                             );
                         $search.on('keypress', this.closeMobileMenu);
 
@@ -636,43 +634,38 @@
                 }
 
                 var _this = this;
-                $('.container').each(function (idx, container) {
-                    _this.fixControls($(container));
+                $('.container').each(function () {
+                    _this.fixControls($(this));
                 });
 
                 return;
             }
 
-            if ($parent.closest('.dashboard').length) {
+            if ($container.parent('.dashboard').length) {
                 return;
             }
 
             // Enable this only in case you want to track down UI problems
-            // self.icinga.logger.debug('Fixing controls for ', $parent);
+            //this.icinga.logger.debug('Fixing controls for ', $container);
 
-            $('.controls', $parent).each(function (idx, el) {
-                var $el = $(el);
-
-                if ($el.closest('.dashboard').length) {
-                    return;
-                }
-
-                var $fake = $el.next('.fake-controls');
-                var y = $parent.scrollTop();
-
-                $el.css({
-                    position : 'fixed',
-                    top      : $parent.offset().top,
-                    // Firefox gives 1px too much depending on total width.
-                    // TODO: find a better solution for -1
-                    width    : ($fake.outerWidth() - 1) + 'px'
+            $container.find('.controls').each(function() {
+                var $controls = $(this);
+                var $fakeControls = $controls.next('.fake-controls');
+                $controls.css({
+                    top: $container.offset().top,
+                    width: $fakeControls.outerWidth()
                 });
-
-                $fake.css({
-                    height  : $el.css('height'),
-                    display : 'block'
-                });
+                $fakeControls.height($controls.height());
             });
+
+            var $statusBar = $container.children('.monitoring-statusbar');
+            if ($statusBar.length) {
+                $statusBar.css({
+                    left: $container.offset().left,
+                    width: $container.width()
+                });
+                $statusBar.prev('.monitoring-statusbar-ghost').height($statusBar.outerHeight(true));
+            }
         },
 
         toggleFullscreen: function () {

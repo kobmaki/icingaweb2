@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\DataView;
 
@@ -39,18 +39,6 @@ class Programstatus extends DataView
             'modified_service_attributes',
             'global_host_event_handler',
             'global_service_event_handler',
-        );
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getSortRules()
-    {
-        return array(
-            'id' => array(
-                'order' => self::SORT_DESC
-            )
         );
     }
 }

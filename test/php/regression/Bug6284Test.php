@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Regression;
 
@@ -11,7 +11,7 @@ use Icinga\Web\Url;
  *
  * href-helper drops URL fragments.
  *
- * @see https://dev.icinga.org/issues/6284
+ * @see https://dev.icinga.com/issues/6284
  */
 class Bug6284Test extends BaseTestCase
 {

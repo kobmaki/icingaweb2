@@ -1,18 +1,16 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
-use Icinga\Web\Response\JsonResponse;
 use Zend_Controller_Plugin_ErrorHandler;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
-use Icinga\Exception\Http\HttpBadRequestException;
-use Icinga\Exception\Http\HttpMethodNotAllowedException;
-use Icinga\Exception\Http\HttpNotFoundException;
+use Icinga\Exception\Http\HttpExceptionInterface;
 use Icinga\Exception\MissingParameterException;
 use Icinga\Security\SecurityException;
 use Icinga\Web\Controller\ActionController;
+use Icinga\Web\Url;
 
 /**
  * Application wide controller for displaying exceptions
@@ -25,6 +23,14 @@ class ErrorController extends ActionController
     protected $requiresAuthentication = false;
 
     /**
+     * {@inheritdoc}
+     */
+    public function init()
+    {
+        $this->rerenderLayout = $this->params->has('renderLayout');
+    }
+
+    /**
      * Display exception
      */
     public function errorAction()
@@ -32,8 +38,6 @@ class ErrorController extends ActionController
         $error      = $this->_getParam('error_handler');
         $exception  = $error->exception;
         /** @var \Exception $exception */
-        Logger::error($exception);
-        Logger::error('Stacktrace: %s', $exception->getTraceAsString());
 
         if (! ($isAuthenticated = $this->Auth()->isAuthenticated())) {
             $this->innerLayout = 'guest-error';
@@ -61,12 +65,11 @@ class ErrorController extends ActionController
                 break;
             default:
                 switch (true) {
-                    case $exception instanceof HttpMethodNotAllowedException:
-                        $this->getResponse()->setHttpResponseCode(405);
-                        $this->getResponse()->setHeader('Allow', $exception->getAllowedMethods());
-                        break;
-                    case $exception instanceof HttpNotFoundException:
-                        $this->getResponse()->setHttpResponseCode(404);
+                    case $exception instanceof HttpExceptionInterface:
+                        $this->getResponse()->setHttpResponseCode($exception->getStatusCode());
+                        foreach ($exception->getHeaders() as $name => $value) {
+                            $this->getResponse()->setHeader($name, $value, true);
+                        }
                         break;
                     case $exception instanceof MissingParameterException:
                         $this->getResponse()->setHttpResponseCode(400);
@@ -75,14 +78,12 @@ class ErrorController extends ActionController
                             'Missing parameter ' . $exception->getParameter()
                         );
                         break;
-                    case $exception instanceof HttpBadRequestException:
-                        $this->getResponse()->setHttpResponseCode(400);
-                        break;
                     case $exception instanceof SecurityException:
                         $this->getResponse()->setHttpResponseCode(403);
                         break;
                     default:
                         $this->getResponse()->setHttpResponseCode(500);
+                        Logger::error("%s\n%s", $exception, $exception->getTraceAsString());
                         break;
                 }
                 $this->view->message = $exception->getMessage();
@@ -100,6 +101,15 @@ class ErrorController extends ActionController
         }
 
         $this->view->request = $error->request;
-        $this->view->hideControls = ! $isAuthenticated;
+        if (! $isAuthenticated) {
+            $this->view->hideControls = true;
+        } else {
+            $this->view->hideControls = false;
+            $this->getTabs()->add('error', array(
+                'active'    => true,
+                'label'     => $this->translate('Error'),
+                'url'       => Url::fromRequest()
+            ));
+        }
     }
 }

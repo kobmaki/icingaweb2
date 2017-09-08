@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Object;
 
@@ -201,10 +201,5 @@ class Host extends MonitoredObject
         return $this->resolveAllStrings(
             MonitoredObject::parseAttributeUrls($this->host_notes_url)
         );
-    }
-
-    public function getNotes()
-    {
-        return $this->host_notes;
     }
 }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Setup\Forms;
 
@@ -204,6 +204,8 @@ class AuthBackendPage extends Form
             }
 
             $this->info($this->translate('The configuration has been successfully validated.'));
+        } elseif (isset($formData['btn_discover_domain'])) {
+            return parent::isValidPartial($formData);
         } elseif (! isset($formData['backend_validation'])) {
             // This is usually done by isValid(Partial), but as we're not calling any of these...
             $this->populate($formData);

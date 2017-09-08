@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\Livestatus;
 
@@ -303,19 +303,19 @@ class Query extends SimpleQuery
         }
         foreach ($usedColumns as $col) {
 // TODO: No alias if filter???
-           if (array_key_exists($col, $this->available_columns)) {
-              // Alias if such
-              $col = $this->available_columns[$col];
-           }
-           if ($col[0] === '_') {
-               $columns['custom_variables'] = true;
-           } elseif (is_array($col)) {
-               foreach ($col as $k) {
-                   $columns[$k] = true;
-               }
-           } else {
-               $columns[$col] = true;
-           }
+            if (array_key_exists($col, $this->available_columns)) {
+                // Alias if such
+                $col = $this->available_columns[$col];
+            }
+            if ($col[0] === '_') {
+                $columns['custom_variables'] = true;
+            } elseif (is_array($col)) {
+                foreach ($col as $k) {
+                    $columns[$k] = true;
+                }
+            } else {
+                $columns[$col] = true;
+            }
         }
 
         $this->preparedHeaders = array_keys($columns);

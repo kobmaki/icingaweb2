@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Doc\Renderer;
 
@@ -65,7 +65,8 @@ class DocSectionRenderer extends DocRenderer
             $filter = new DocSectionFilterIterator($tree->getIterator(), $chapter);
             if ($filter->isEmpty()) {
                 throw new ChapterNotFoundException(
-                    mt('doc', 'Chapter %s not found'), $chapter
+                    mt('doc', 'Chapter %s not found'),
+                    $chapter
                 );
             }
             parent::__construct(
@@ -190,20 +191,67 @@ class DocSectionRenderer extends DocRenderer
         $xpath = new DOMXPath($doc);
         $img = $xpath->query('//img[1]')->item(0);
         /** @var \DOMElement $img */
-        $img->setAttribute('src', Url::fromPath($img->getAttribute('src'))->getAbsoluteUrl());
+        $path = $this->getView()->getHelper('Url')->url(
+            array_merge(
+                array(
+                    'image' => $img->getAttribute('src')
+                ),
+                $this->urlParams
+            ),
+            $this->imageUrl,
+            false,
+            false
+        );
+        $url = $this->getView()->url($path);
+        /** @var \Icinga\Web\Url $url */
+        $img->setAttribute('src', $url->getAbsoluteUrl());
         return substr_replace($doc->saveXML($img), '', -2, 1);  // Replace '/>' with '>'
     }
 
     /**
-     * Replace link
+     * Replace chapter link
      *
      * @param   array $match
      *
      * @return  string
      */
-    protected function replaceLink($match)
+    protected function replaceChapterLink($match)
     {
-        if (($section = $this->tree->getNode($this->decodeAnchor($match['fragment']))) === null) {
+        if (($chapter = $this->tree->getNode($this->decodeAnchor($match['chapter']))) === null) {
+            return $match[0];
+        }
+        /** @var \Icinga\Module\Doc\DocSection $section */
+        $path = $this->getView()->getHelper('Url')->url(
+            array_merge(
+                $this->urlParams,
+                array(
+                    'chapter' => $this->encodeUrlParam($chapter->getChapter()->getId())
+                )
+            ),
+            $this->url,
+            false,
+            false
+        );
+        $url = $this->getView()->url($path);
+        /** @var \Icinga\Web\Url $url */
+        return sprintf(
+            '<a %s%shref="%s"',
+            strlen($match['attribs']) ? trim($match['attribs']) . ' ' : '',
+            $chapter->getNoFollow() ? 'rel="nofollow" ' : '',
+            $url->getAbsoluteUrl()
+        );
+    }
+
+    /**
+     * Replace section link
+     *
+     * @param   array $match
+     *
+     * @return  string
+     */
+    protected function replaceSectionLink($match)
+    {
+        if (($section = $this->tree->getNode($this->decodeAnchor($match['section']))) === null) {
             return $match[0];
         }
         /** @var \Icinga\Module\Doc\DocSection $section */
@@ -245,10 +293,18 @@ class DocSectionRenderer extends DocRenderer
             } else {
                 $title = $this->getView()->escape($title);
             }
+            $number = '';
+            for ($i = 0; $i < $this->getDepth() + 1; ++$i) {
+                if ($i > 0) {
+                    $number .= '.';
+                }
+                $number .= $this->getSubIterator($i)->key() + 1;
+            }
             $this->content[] = sprintf(
-                '<a name="%1$s"></a><h%2$d>%3$s</h%2$d>',
+                '<a name="%1$s"></a><h%2$d>%3$s. %4$s</h%2$d>',
                 static::encodeAnchor($section->getId()),
                 $section->getLevel(),
+                $number,
                 $title
             );
             $html = $this->parsedown->text(implode('', $section->getContent()));
@@ -266,13 +322,18 @@ class DocSectionRenderer extends DocRenderer
                 $html
             );
             $html = preg_replace_callback(
-                '#<blockquote>.+</blockquote>#ms',
+                '#<blockquote>.+?</blockquote>#ms',
                 array($this, 'markupNotes'),
                 $html
             );
             $html = preg_replace_callback(
-                '/<a\s+(?P<attribs>[^>]*?\s+)?href="(?:(?!http:\/\/)[^"#]*)#(?P<fragment>[^"]+)"/',
-                array($this, 'replaceLink'),
+                '/<a\s+(?P<attribs>[^>]*?\s+)?href="(?:(?!http:\/\/)[^"#]*)#(?P<section>[^"]+)"/',
+                array($this, 'replaceSectionLink'),
+                $html
+            );
+            $html = preg_replace_callback(
+                '/<a\s+(?P<attribs>[^>]*?\s+)?href="(?:\d+-)?(?P<chapter>[^\/"#]+).md"/',
+                array($this, 'replaceChapterLink'),
                 $html
             );
             if ($search !== null) {

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Controllers;
 
@@ -12,6 +12,7 @@ use Icinga\Module\Monitoring\Forms\Command\Object\SendCustomNotificationCommandF
 use Icinga\Module\Monitoring\Object\Service;
 use Icinga\Module\Monitoring\Web\Controller\MonitoredObjectController;
 use Icinga\Web\Hook;
+use Icinga\Web\Navigation\Navigation;
 
 class ServiceController extends MonitoredObjectController
 {
@@ -26,7 +27,9 @@ class ServiceController extends MonitoredObjectController
     public function init()
     {
         $service = new Service(
-            $this->backend, $this->params->getRequired('host'), $this->params->getRequired('service')
+            $this->backend,
+            $this->params->getRequired('host'),
+            $this->params->getRequired('service')
         );
 
         $this->applyRestriction('monitoring/filter/objects', $service);
@@ -42,19 +45,16 @@ class ServiceController extends MonitoredObjectController
     /**
      * Get service actions from hook
      *
-     * @return array
+     * @return Navigation
      */
     protected function getServiceActions()
     {
-        $urls = array();
-
+        $navigation = new Navigation();
         foreach (Hook::all('Monitoring\\ServiceActions') as $hook) {
-            foreach ($hook->getActionsForService($this->object) as $id => $url) {
-                $urls[$id] = $url;
-            }
+            $navigation->merge($hook->getNavigation($this->object));
         }
 
-        return $urls;
+        return $navigation;
     }
 
     /**
@@ -123,7 +123,6 @@ class ServiceController extends MonitoredObjectController
         $this->assertPermission('monitoring/command/process-check-result');
 
         $form = new ProcessCheckResultCommandForm();
-        $form->setBackend($this->backend);
         $form->setTitle($this->translate('Submit Passive Service Check Result'));
         $this->handleCommandForm($form);
     }

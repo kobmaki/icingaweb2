@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Command\Object;
 
@@ -16,6 +16,15 @@ class DeleteDowntimeCommand extends IcingaCommand
      * @var int
      */
     protected $downtimeId;
+
+    /**
+     * Name of the downtime (Icinga 2.4+)
+     *
+     * Required for removing the downtime via Icinga 2's API.
+     *
+     * @var string
+     */
+    protected $downtimeName;
 
     /**
      * Whether the command affects a service downtime
@@ -44,6 +53,33 @@ class DeleteDowntimeCommand extends IcingaCommand
     public function setDowntimeId($downtimeId)
     {
         $this->downtimeId = (int) $downtimeId;
+        return $this;
+    }
+
+    /**
+     * Get the name of the downtime (Icinga 2.4+)
+     *
+     * Required for removing the downtime via Icinga 2's API.
+     *
+     * @return string
+     */
+    public function getDowntimeName()
+    {
+        return $this->downtimeName;
+    }
+
+    /**
+     * Set the name of the downtime (Icinga 2.4+)
+     *
+     * Required for removing the downtime via Icinga 2's API.
+     *
+     * @param   string  $downtimeName
+     *
+     * @return  $this
+     */
+    public function setDowntimeName($downtimeName)
+    {
+        $this->downtimeName = $downtimeName;
         return $this;
     }
 

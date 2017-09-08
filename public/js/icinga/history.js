@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /**
  * Icinga.History
@@ -144,8 +144,8 @@
          */
         onHistoryChange: function (event) {
 
-            var self   = event.data.self,
-                icinga = self.icinga;
+            var _this   = event.data.self,
+                icinga = _this.icinga;
 
             icinga.logger.debug('Got a history change');
 
@@ -157,9 +157,9 @@
             }
 
             // keep the last pushed url in sync with history changes
-            self.lastPushUrl = location.href;
+            _this.lastPushUrl = location.href;
 
-            self.applyLocationBar();
+            _this.applyLocationBar();
 
             // notify behaviors of the state change
             $.each(this.icinga.behaviors, function (i, behavior) {
@@ -211,10 +211,12 @@
                     );
                 } else {
                     if ($('#col2').data('icingaUrl') !== parts[1]) {
-                        icinga.loader.loadUrl(
+                        var req = icinga.loader.loadUrl(
                             parts[1],
                             $('#col2')
-                        ).addToHistory = false;
+                        );
+                        req.addToHistory = false;
+                        req.autorefresh = onload;
                     }
                 }
 

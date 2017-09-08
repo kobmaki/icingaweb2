@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -37,7 +37,11 @@ class DashboardController extends ActionController
     public function newDashletAction()
     {
         $form = new DashletForm();
-        $this->createTabs();
+        $this->getTabs()->add('new-dashlet', array(
+            'active'    => true,
+            'label'     => $this->translate('New Dashlet'),
+            'url'       => Url::fromRequest()
+        ));
         $dashboard = $this->dashboard;
         $form->setDashboard($dashboard);
         if ($this->_request->getParam('url')) {
@@ -77,7 +81,11 @@ class DashboardController extends ActionController
 
     public function updateDashletAction()
     {
-        $this->createTabs();
+        $this->getTabs()->add('update-dashlet', array(
+            'active'    => true,
+            'label'     => $this->translate('Update Dashlet'),
+            'url'       => Url::fromRequest()
+        ));
         $dashboard = $this->dashboard;
         $form = new DashletForm();
         $form->setDashboard($dashboard);
@@ -145,7 +153,11 @@ class DashboardController extends ActionController
     public function removeDashletAction()
     {
         $form = new ConfirmRemovalForm();
-        $this->createTabs();
+        $this->getTabs()->add('remove-dashlet', array(
+            'active'    => true,
+            'label'     => $this->translate('Remove Dashlet'),
+            'url'       => Url::fromRequest()
+        ));
         $dashboard = $this->dashboard;
         if (! $this->_request->getParam('pane')) {
             throw new Zend_Controller_Action_Exception(
@@ -169,7 +181,7 @@ class DashboardController extends ActionController
             try {
                 $dashboardConfig->saveIni();
                 Notification::success(t('Dashlet has been removed from') . ' ' . $pane->getTitle());
-            }  catch (Exception $e) {
+            } catch (Exception $e) {
                 $action->view->error = $e;
                 $action->view->config = $dashboardConfig;
                 $action->render('error');
@@ -205,7 +217,7 @@ class DashboardController extends ActionController
             try {
                 $dashboardConfig->saveIni();
                 Notification::success(t('Dashboard has been removed') . ': ' . $pane->getTitle());
-            }  catch (Exception $e) {
+            } catch (Exception $e) {
                 $action->view->error = $e;
                 $action->view->config = $dashboardConfig;
                 $action->render('error');
@@ -232,20 +244,35 @@ class DashboardController extends ActionController
         if (! $this->dashboard->hasPanes()) {
             $this->view->title = 'Dashboard';
         } else {
-            if ($this->_getParam('pane')) {
-                $pane = $this->_getParam('pane');
-                $this->dashboard->activate($pane);
-            }
-            if ($this->dashboard === null) {
-                $this->view->title = 'Dashboard';
-            } else {
-                $this->view->title = $this->dashboard->getActivePane()->getTitle() . ' :: Dashboard';
-                if ($this->hasParam('remove')) {
-                    $this->dashboard->getActivePane()->removeDashlet($this->getParam('remove'));
-                    $this->dashboard->getConfig()->saveIni();
-                    $this->redirectNow(URL::fromRequest()->remove('remove'));
+            $panes = array_filter(
+                $this->dashboard->getPanes(),
+                function ($pane) {
+                    return ! $pane->getDisabled();
                 }
-                $this->view->dashboard = $this->dashboard;
+            );
+            if (empty($panes)) {
+                $this->view->title = 'Dashboard';
+                $this->getTabs()->add('dashboard', array(
+                    'active'    => true,
+                    'title'     => $this->translate('Dashboard'),
+                    'url'       => Url::fromRequest()
+                ));
+            } else {
+                if ($this->_getParam('pane')) {
+                    $pane = $this->_getParam('pane');
+                    $this->dashboard->activate($pane);
+                }
+                if ($this->dashboard === null) {
+                    $this->view->title = 'Dashboard';
+                } else {
+                    $this->view->title = $this->dashboard->getActivePane()->getTitle() . ' :: Dashboard';
+                    if ($this->hasParam('remove')) {
+                        $this->dashboard->getActivePane()->removeDashlet($this->getParam('remove'));
+                        $this->dashboard->getConfig()->saveIni();
+                        $this->redirectNow(URL::fromRequest()->remove('remove'));
+                    }
+                    $this->view->dashboard = $this->dashboard;
+                }
             }
         }
     }

@@ -1,15 +1,18 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Object;
 
+use stdClass;
 use InvalidArgumentException;
+use Icinga\Authentication\Auth;
 use Icinga\Application\Config;
 use Icinga\Data\Filter\Filter;
 use Icinga\Data\Filterable;
 use Icinga\Exception\InvalidPropertyException;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Module\Monitoring\Backend\MonitoringBackend;
+use Icinga\Util\GlobFilter;
 use Icinga\Web\UrlParams;
 
 /**
@@ -147,6 +150,13 @@ abstract class MonitoredObject implements Filterable
     protected $stats;
 
     /**
+     * The properties to hide from the user
+     *
+     * @var GlobFilter
+     */
+    protected $blacklistedProperties = null;
+
+    /**
      * Create a monitored object, i.e. host or service
      *
      * @param MonitoringBackend $backend Backend to fetch object information from
@@ -164,18 +174,11 @@ abstract class MonitoredObject implements Filterable
     abstract protected function getDataView();
 
     /**
-     * Get the notes for this monitored object
-     *
-     * @return string The notes as a string
-     */
-    public abstract function getNotes();
-
-    /**
      * Get all note urls configured for this monitored object
      *
      * @return array All note urls as a string
      */
-    public abstract function getNotesUrls();
+    abstract public function getNotesUrls();
 
     /**
      * {@inheritdoc}
@@ -322,6 +325,7 @@ abstract class MonitoredObject implements Filterable
             'comment'           => 'comment_data',
             'expiration'        => 'comment_expiration',
             'id'                => 'comment_internal_id',
+            'name'              => 'comment_name',
             'persistent'        => 'comment_is_persistent',
             'timestamp'         => 'comment_timestamp',
             'type'              => 'comment_type'
@@ -435,7 +439,7 @@ abstract class MonitoredObject implements Filterable
         }
 
         $blacklist = array();
-        $blacklistPattern = '/^(.*pw.*|.*pass.*|community)$/i';
+        $blacklistPattern = '';
 
         if (($blacklistConfig = Config::module('monitoring')->get('security', 'protected_customvars', '')) !== '') {
             foreach (explode(',', $blacklistConfig) as $customvar) {
@@ -456,16 +460,56 @@ abstract class MonitoredObject implements Filterable
             $customvars = $this->hostVariables;
         }
 
-        $this->customvars = array();
-        foreach ($customvars as $name => $value) {
-            if ($blacklistPattern && preg_match($blacklistPattern, $name)) {
-                $this->customvars[$name] = '***';
-            } else {
-                $this->customvars[$name] = $value;
-            }
+        $this->customvars = $customvars;
+        $this->hideBlacklistedProperties();
+
+        if ($blacklistPattern) {
+            $this->customvars = $this->obfuscateCustomVars($this->customvars, $blacklistPattern);
         }
 
         return $this;
+    }
+
+    /**
+     * Obfuscate custom variables recursively
+     *
+     * @param stdClass|array    $customvars         The custom variables to obfuscate
+     * @param string            $blacklistPattern   Which custom variables to obfuscate
+     *
+     * @return stdClass|array                       The obfuscated custom variables
+     */
+    protected function obfuscateCustomVars($customvars, $blacklistPattern)
+    {
+        $obfuscatedCustomVars = array();
+        foreach ($customvars as $name => $value) {
+            if ($blacklistPattern && preg_match($blacklistPattern, $name)) {
+                $obfuscatedCustomVars[$name] = '***';
+            } else {
+                $obfuscatedCustomVars[$name] = $value instanceof stdClass || is_array($value)
+                    ? $this->obfuscateCustomVars($value, $blacklistPattern)
+                    : $value;
+            }
+        }
+        return $customvars instanceof stdClass ? (object) $obfuscatedCustomVars : $obfuscatedCustomVars;
+    }
+
+    /**
+     * Hide all blacklisted properties from the user as restricted by monitoring/blacklist/properties
+     *
+     * Currently this only affects the custom variables
+     */
+    protected function hideBlacklistedProperties()
+    {
+        if ($this->blacklistedProperties === null) {
+            $this->blacklistedProperties = new GlobFilter(
+                Auth::getInstance()->getRestrictions('monitoring/blacklist/properties')
+            );
+        }
+
+        $allProperties = $this->blacklistedProperties->removeMatching(
+            array($this->type => array('vars' => $this->customvars))
+        );
+        $this->customvars = isset($allProperties[$this->type]['vars']) ? $allProperties[$this->type]['vars'] : array();
     }
 
     /**
@@ -537,19 +581,20 @@ abstract class MonitoredObject implements Filterable
     public function fetchDowntimes()
     {
         $downtimes = $this->backend->select()->from('downtime', array(
-            'id'                => 'downtime_internal_id',
-            'objecttype'        => 'object_type',
-            'comment'           => 'downtime_comment',
             'author_name'       => 'downtime_author_name',
-            'start'             => 'downtime_start',
-            'scheduled_start'   => 'downtime_scheduled_start',
-            'scheduled_end'     => 'downtime_scheduled_end',
-            'end'               => 'downtime_end',
+            'comment'           => 'downtime_comment',
             'duration'          => 'downtime_duration',
-            'is_flexible'       => 'downtime_is_flexible',
+            'end'               => 'downtime_end',
+            'entry_time'        => 'downtime_entry_time',
+            'id'                => 'downtime_internal_id',
             'is_fixed'          => 'downtime_is_fixed',
+            'is_flexible'       => 'downtime_is_flexible',
             'is_in_effect'      => 'downtime_is_in_effect',
-            'entry_time'        => 'downtime_entry_time'
+            'name'              => 'downtime_name',
+            'objecttype'        => 'object_type',
+            'scheduled_end'     => 'downtime_scheduled_end',
+            'scheduled_start'   => 'downtime_scheduled_start',
+            'start'             => 'downtime_start'
         ))
             ->where('object_type', $this->type)
             ->order('downtime_is_in_effect', 'DESC')
@@ -705,7 +750,7 @@ abstract class MonitoredObject implements Filterable
      * Find all occurences of http links, separated by whitespaces and quoted
      * by single or double-ticks.
      *
-     * @link http://docs.icinga.org/latest/de/objectdefinitions.html
+     * @link http://docs.icinga.com/latest/de/objectdefinitions.html
      *
      * @param   string  $urlString  A string containing one or more urls
      * @return  array                   Array of urls as strings
@@ -826,13 +871,17 @@ abstract class MonitoredObject implements Filterable
                     $this->fetchContacts();
                 }
 
-                return array_map(function ($el) { return $el->contact_name; }, $this->contacts);
+                return array_map(function ($el) {
+                    return $el->contact_name;
+                }, $this->contacts);
             } elseif ($name === 'contactgroup_name') {
                 if ($this->contactgroups === null) {
                     $this->fetchContactgroups();
                 }
 
-                return array_map(function ($el) { return $el->contactgroup_name; }, $this->contactgroups);
+                return array_map(function ($el) {
+                    return $el->contactgroup_name;
+                }, $this->contactgroups);
             } elseif ($name === 'hostgroup_name') {
                 if ($this->hostgroups === null) {
                     $this->fetchHostgroups();

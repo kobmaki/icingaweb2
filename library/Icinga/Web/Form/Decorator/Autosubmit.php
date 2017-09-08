@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Form\Decorator;
 
@@ -96,14 +96,19 @@ class Autosubmit extends Zend_Form_Decorator_Abstract
         if ($content) {
             $isForm = $this->getElement() instanceof Form;
             $warning = $isForm
-                ? t('Upon any of this form\'s fields were changed, this page is being updated automatically.')
-                : t('Upon its value has changed, this field issues an automatic update of this page.');
+                ? t('This page will be automatically updated upon change of any of this form\'s fields')
+                : t('This page will be automatically updated upon change of the value');
             $content .= $this->getView()->icon('cw', $warning, array(
                 'aria-hidden'   => $isForm ? 'false' : 'true',
-                'class'         => 'spinner'
+                'class'         => 'spinner autosubmit-info'
             ));
             if (! $isForm && $this->getAccessible()) {
-                $content = '<span id="' . $this->getWarningId() . '" class="sr-only">' . $warning . '</span>' . $content;
+                $content = '<span id="'
+                    . $this->getWarningId()
+                    . '" class="sr-only">'
+                    . $warning
+                    . '</span>'
+                    . $content;
             }
 
             $content .= sprintf(

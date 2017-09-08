@@ -36,25 +36,35 @@
         <?= $this->timeAgo($comment->timestamp) ?>
     </span>
     <span class="comment-icons" data-base-target="_self">
-        <?= $comment->persistent ? $this->icon('attach', 'This comment is persistent.') : '' ?>
+        <?= $comment->persistent ? $this->icon('attach', 'This comment is persistent') : '' ?>
         <?= $comment->expiration ? $this->icon('clock', sprintf(
-            $this->translate('This comment expires %s.'),
-            $this->timeUntil($comment->expiration)
+            $this->translate('This comment expires on %s at %s'),
+            $this->formatDate($comment->expiration),
+            $this->formatTime($comment->expiration)
         )) : '' ?>
     <?php if (isset($delCommentForm)) {
+        // Form is unset if the current user lacks the respective permission
+        $uniqId = uniqid();
+        $buttonId = 'delete-comment-' . $uniqId;
+        $textId = 'comment-' . $uniqId;
         $deleteButton = clone $delCommentForm;
         /** @var \Icinga\Module\Monitoring\Forms\Command\Object\DeleteCommentCommandForm $deleteButton */
         $deleteButton->setAttrib('class', $deleteButton->getAttrib('class') . ' remove-action');
         $deleteButton->populate(
             array(
                 'comment_id'            => $comment->id,
-                'comment_is_service'    => isset($comment->service_description)
+                'comment_is_service'    => isset($comment->service_description),
+                'comment_name'          => $comment->name
             )
         );
+        $deleteButton->getElement('btn_submit')
+            ->setAttrib('aria-label', $this->translate('Delete comment'))
+            ->setAttrib('id', $buttonId)
+            ->setAttrib('aria-describedby', $buttonId . ' ' . $textId);
         echo $deleteButton;
     } ?>
     </span>
 </div>
-<p class="comment-text">
-    <?= $this->nl2br($this->escape($comment->comment)) ?>
+<p class="comment-text"<?php if (isset($textId)): ?> id="<?= $textId ?>"<?php endif ?>>
+    <?= $this->nl2br($this->escapeComment($comment->comment)) ?>
 </p>

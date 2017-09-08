@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Util;
 
@@ -16,7 +16,11 @@ class DimensionTest extends BaseTestCase
 
         $d = Dimension::fromString("40%");
         $this->assertEquals(40, $d->getValue(), "Asserting the numeric value of % input to be correctly parsed");
-        $this->assertEquals(Dimension::UNIT_PERCENT, $d->getUnit(), "Asserting the unit of % input to be correctly parsed");
+        $this->assertEquals(
+            Dimension::UNIT_PERCENT,
+            $d->getUnit(),
+            "Asserting the unit of % input to be correctly parsed"
+        );
 
         $d = Dimension::fromString("4044em");
         $this->assertEquals(4044, $d->getValue(), "Asserting the numeric value of em input to be correctly parsed");

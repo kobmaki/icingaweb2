@@ -1,16 +1,18 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
 use Exception;
 use Icinga\Application\Logger;
+use Icinga\Authentication\User\DomainAwareInterface;
 use Icinga\Data\DataArray\ArrayDatasource;
 use Icinga\Data\Filter\Filter;
 use Icinga\Data\Reducible;
 use Icinga\Exception\NotFoundError;
 use Icinga\Forms\Config\UserGroup\AddMemberForm;
 use Icinga\Forms\Config\UserGroup\UserGroupForm;
+use Icinga\User;
 use Icinga\Web\Controller\AuthBackendController;
 use Icinga\Web\Form;
 use Icinga\Web\Notification;
@@ -27,7 +29,9 @@ class GroupController extends AuthBackendController
         $this->assertPermission('config/authentication/groups/show');
         $this->createListTabs()->activate('group/list');
         $backendNames = array_map(
-            function ($b) { return $b->getName(); },
+            function ($b) {
+                return $b->getName();
+            },
             $this->loadUserGroupBackends('Icinga\Data\Selectable')
         );
         if (empty($backendNames)) {
@@ -295,8 +299,27 @@ class GroupController extends AuthBackendController
         $users = array();
         foreach ($this->loadUserBackends('Icinga\Data\Selectable') as $backend) {
             try {
-                foreach ($backend->select(array('user_name')) as $row) {
-                    $users[] = $row;
+                if ($backend instanceof DomainAwareInterface) {
+                    $domain = $backend->getDomain();
+                } else {
+                    $domain = null;
+                }
+                foreach ($backend->select(array('user_name')) as $user) {
+                    $userObj = new User($user->user_name);
+                    if ($domain !== null) {
+                        if ($userObj->hasDomain() && $userObj->getDomain() !== $domain) {
+                            // Users listed in a user backend which is configured to be responsible for a domain should
+                            // not have a domain in their username. Ultimately, if the username has a domain, it must
+                            // not differ from the backend's domain. We could log here - but hey, who cares :)
+                            continue;
+                        } else {
+                            $userObj->setDomain($domain);
+                        }
+                    }
+
+                    $user->user_name = $userObj->getUsername();
+
+                    $users[] = $user;
                 }
             } catch (Exception $e) {
                 Logger::error($e);

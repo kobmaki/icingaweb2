@@ -1,27 +1,32 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Web\Navigation\Renderer;
 
 use Exception;
+use Icinga\Application\Logger;
 use Icinga\Authentication\Auth;
 use Icinga\Data\Filter\Filter;
 use Icinga\Data\Filterable;
 use Icinga\Module\Monitoring\Backend\MonitoringBackend;
-use Icinga\Web\Navigation\Renderer\SummaryNavigationItemRenderer;
+use Icinga\Web\Navigation\Renderer\BadgeNavigationItemRenderer;
 
 /**
- * Render generic dataView columns as badges in MenuItems
- *
- * Renders numeric data view column values into menu item badges, fully configurable
- * and with a caching mechanism to prevent needless requests to the same data view.
+ * Render generic DataView columns as badges in menu items
  *
  * It is possible to configure the class of the rendered badge as option 'class', the
- * column to fetch using the option 'column' and the dataView from which the columns
- * will be fetched using the option 'dataView'.
+ * columns to fetch using the option 'columns' and the DataView from which the columns
+ * will be fetched using the option 'dataview'.
  */
-class MonitoringBadgeNavigationItemRenderer extends SummaryNavigationItemRenderer
+class MonitoringBadgeNavigationItemRenderer extends BadgeNavigationItemRenderer
 {
+    /**
+     * Cached count
+     *
+     * @var int
+     */
+    protected $count;
+
     /**
      * Caches the responses for all executed summaries
      *
@@ -98,29 +103,6 @@ class MonitoringBadgeNavigationItemRenderer extends SummaryNavigationItemRendere
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function init()
-    {
-        // clear the outdated summary cache, since new columns are being added. Optimally all menu item are constructed
-        // before any rendering is going on to avoid trashing too man old requests
-        if (isset(self::$summaries[$this->dataView])) {
-            unset(self::$summaries[$this->dataView]);
-        }
-
-        // add the new columns to this view
-        if (! isset(self::$dataViews[$this->dataView])) {
-            self::$dataViews[$this->dataView] = array();
-        }
-
-        foreach ($this->columns as $column => $title) {
-            if (! array_search($column, self::$dataViews[$this->dataView])) {
-                self::$dataViews[$this->dataView][] = $column;
-            }
-        }
-    }
-
-    /**
      * Apply a restriction on the given data view
      *
      * @param   string      $restriction    The name of restriction
@@ -139,24 +121,18 @@ class MonitoringBadgeNavigationItemRenderer extends SummaryNavigationItemRendere
     }
 
     /**
-     * Fetch the dataview from the database or access cache
-     *
-     * @param   string  $view
+     * Fetch the dataview from the database
      *
      * @return  object
      */
-    protected static function summary($view)
+    protected function fetchDataView()
     {
-        if (! isset(self::$summaries[$view])) {
-            $summary = MonitoringBackend::instance()->select()->from(
-                $view,
-                self::$dataViews[$view]
-            );
-            static::applyRestriction('monitoring/filter/objects', $summary);
-            self::$summaries[$view] = $summary->fetchRow();
-        }
-
-        return self::$summaries[$view];
+        $summary = MonitoringBackend::instance()->select()->from(
+            $this->getDataView(),
+            array_keys($this->getColumns())
+        );
+        static::applyRestriction('monitoring/filter/objects', $summary);
+        return $summary->fetchRow();
     }
 
     /**
@@ -164,20 +140,28 @@ class MonitoringBadgeNavigationItemRenderer extends SummaryNavigationItemRendere
      */
     public function getCount()
     {
-        try {
-            $summary = self::summary($this->getDataView());
-        } catch (Exception $_) {
-            return 0;
-        }
-
-        $count = 0;
-        foreach ($this->getColumns() as $column => $title) {
-            if (isset($summary->$column) && $summary->$column > 0) {
-                $this->titles[] = sprintf($title, $summary->$column);
-                $count += $summary->$column;
+        if ($this->count === null) {
+            try {
+                $summary = $this->fetchDataView();
+            } catch (Exception $e) {
+                Logger::debug($e);
+                $this->count = 1;
+                $this->state = static::STATE_UNKNOWN;
+                $this->title = $e->getMessage();
+                return $this->count;
             }
+            $count = 0;
+            $titles = array();
+            foreach ($this->getColumns() as $column => $title) {
+                if (isset($summary->$column) && $summary->$column > 0) {
+                    $titles[] = sprintf($title, $summary->$column);
+                    $count += $summary->$column;
+                }
+            }
+            $this->count = $count;
+            $this->title = implode('. ', $titles);
         }
 
-        return $count;
+        return $this->count;
     }
 }

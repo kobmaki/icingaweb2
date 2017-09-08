@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Data;
 
@@ -75,14 +75,14 @@ class FilterTest extends BaseTestCase
             (object) array(
                 'host'    => 'localhost',
                 'problem' => '1',
-                'service' => 'www.icinga.org',
+                'service' => 'www.icinga.com',
                 'state'   => '0',
                 'handled' => '0'
             ),
             (object) array(
                 'host'    => 'localhost',
                 'problem' => '1',
-                'service' => 'www.icinga.org',
+                'service' => 'www.icinga.com',
                 'state'   => '1',
                 'handled' => '0'
             )
@@ -124,7 +124,7 @@ class FilterTest extends BaseTestCase
     public function testWildcardFilterMatchesEnding()
     {
         $this->assertTrue(
-            Filter::where('service', '*org')->matches($this->row(1))
+            Filter::where('service', '*com')->matches($this->row(1))
         );
     }
 
@@ -138,7 +138,7 @@ class FilterTest extends BaseTestCase
     public function testWildcardFilterMatchesDot()
     {
         $this->assertTrue(
-            Filter::where('service', 'www*icinga.org')->matches($this->row(1))
+            Filter::where('service', 'www*icinga.com')->matches($this->row(1))
         );
     }
 
@@ -169,7 +169,7 @@ class FilterTest extends BaseTestCase
             Filter::matchAny(
                 Filter::where('service', 'ping'),
                 Filter::matchAll(
-                    Filter::where('service', 'www.icinga.org'),
+                    Filter::where('service', 'www.icinga.com'),
                     Filter::where('state', '0')
                 )
             )
@@ -198,52 +198,88 @@ class FilterTest extends BaseTestCase
         $this->assertNotEquals((string) $c, (string) $d);
     }
 
+    public function testBooleanExpressionIsRenderedCorrectly()
+    {
+        $filter = Filter::fromQueryString('a&!b');
+        $this->assertEquals(
+            $filter->toQueryString(),
+            'a&!b'
+        );
+        $this->assertEquals(
+            (string) $filter,
+            // TODO: I'd prefer to see 'a & !b' here:
+            'a & (! b)'
+        );
+    }
+
     public function testLeadingAndTrailingWhitespaces()
     {
         $columnWithWhitespaces = Filter::where(' host ', 'localhost');
-        $this->assertTrue($columnWithWhitespaces->matches((object) array(
+        $this->assertTrue(
+            $columnWithWhitespaces->matches((object) array(
                 'host' => 'localhost'
             )),
             'Filter doesn\'t remove leading and trailing whitespaces from columns'
         );
         $expressionWithLeadingWhitespaces = Filter::where('host', ' localhost');
-        $this->assertTrue($expressionWithLeadingWhitespaces->matches((object) array(
+        $this->assertTrue(
+            $expressionWithLeadingWhitespaces->matches((object) array(
                 'host' => ' localhost'
             )),
             'Filter doesn\'t take leading whitespaces of expressions into account'
         );
-        $this->assertFalse($expressionWithLeadingWhitespaces->matches((object) array(
+        $this->assertFalse(
+            $expressionWithLeadingWhitespaces->matches((object) array(
                 'host' => ' localhost '
             )),
             'Filter doesn\'t take trailing whitespaces of expressions into account'
         );
         $expressionWithTrailingWhitespaces = Filter::where('host', 'localhost ');
-        $this->assertTrue($expressionWithTrailingWhitespaces->matches((object) array(
+        $this->assertTrue(
+            $expressionWithTrailingWhitespaces->matches((object) array(
                 'host' => 'localhost '
             )),
             'Filter doesn\'t take trailing whitespaces of expressions into account'
         );
-        $this->assertFalse($expressionWithTrailingWhitespaces->matches((object) array(
+        $this->assertFalse(
+            $expressionWithTrailingWhitespaces->matches((object) array(
                 'host' => ' localhost '
             )),
             'Filter doesn\'t take leading whitespaces of expressions into account'
         );
         $expressionWithLeadingAndTrailingWhitespaces = Filter::where('host', ' localhost ');
-        $this->assertTrue($expressionWithLeadingAndTrailingWhitespaces->matches((object) array(
+        $this->assertTrue(
+            $expressionWithLeadingAndTrailingWhitespaces->matches((object) array(
                 'host' => ' localhost '
             )),
             'Filter doesn\'t take leading and trailing whitespaces of expressions into account'
         );
-        $this->assertFalse($expressionWithLeadingAndTrailingWhitespaces->matches((object) array(
+        $this->assertFalse(
+            $expressionWithLeadingAndTrailingWhitespaces->matches((object) array(
                 'host' => ' localhost  '
             )),
             'Filter doesn\'t take leading and trailing whitespaces of expressions into account'
         );
         $queryStringWithWhitespaces = Filter::fromQueryString(' host = localhost ');
-        $this->assertTrue($queryStringWithWhitespaces->matches((object) array(
+        $this->assertTrue(
+            $queryStringWithWhitespaces->matches((object) array(
                 'host' => ' localhost '
             )),
             'Filter doesn\'t take leading and trailing whitespaces of expressions in query strings into account'
+        );
+    }
+
+    /**
+     * Test whether special characters inside values are URL-encoded, but the other ones aren't
+     */
+    public function testSpecialCharacterEscaping()
+    {
+        $this->assertSame(
+            Filter::matchAll(
+                Filter::expression('host', '!=', 'localhost'),
+                Filter::matchAny(Filter::where('service', 'ping4'), Filter::where('specialchars', '(|&!=)'))
+            )->toQueryString(),
+            'host!=localhost&(service=ping4|specialchars=%28%7C%26%21%3D%29)'
         );
     }
 

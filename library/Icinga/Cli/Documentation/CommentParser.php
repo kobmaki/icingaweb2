@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Cli\Documentation;
 
@@ -34,7 +34,6 @@ class CommentParser
         $plain = preg_replace('~\n\s*\*/\s*~s', "\n", $plain);
         $p = null;
         foreach (preg_split('~\n~', $plain) as $line) {
-
             // Strip * at line start
             $line = preg_replace('~^\s*\*\s?~', '', $line);
             $line = rtrim($line);

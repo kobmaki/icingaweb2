@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 // Login page styles
 
@@ -46,8 +46,19 @@
     border-bottom: solid 3px @body-bg-color;
     color: @body-bg-color;
     display: block;
+    height: 2.5em;
     margin: 0;
+    transition: none;
     width: 100%;
+
+    &:focus {
+      .rounded-corners(3px);
+      background-color: @body-bg-color;
+      border: none;
+      border-radius: 0;
+      color: @icinga-blue;
+      padding-bottom: 3px;
+    }
   }
 
   .form-controls {
@@ -57,6 +68,7 @@
 
   input[type=submit] {
     .button(@icinga-blue, @body-bg-color);
+    height: 2.5em;
     margin: 0;
     width: 100%;
   }

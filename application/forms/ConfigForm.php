@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms;
 
@@ -58,7 +58,7 @@ class ConfigForm extends Form
     {
         $sections = array();
         foreach ($this->getValues() as $sectionAndPropertyName => $value) {
-            if ($value === '') {
+            if (empty($value)) {
                 $value = null; // Causes the config writer to unset it
             }
 
@@ -126,5 +126,19 @@ class ConfigForm extends Form
     protected function writeConfig(Config $config)
     {
         $config->saveIni();
+    }
+
+    /**
+     * Transform all empty values of the given array to null
+     *
+     * @param   array   $values
+     *
+     * @return  array
+     */
+    public static function transformEmptyValuesToNull(array $values)
+    {
+        return array_map(function ($v) {
+            return empty($v) ? null : $v;
+        }, $values);
     }
 }

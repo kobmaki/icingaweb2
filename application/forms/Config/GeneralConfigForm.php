@@ -1,9 +1,10 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms\Config;
 
 use Icinga\Forms\Config\General\ApplicationConfigForm;
+use Icinga\Forms\Config\General\DefaultAuthenticationDomainConfigForm;
 use Icinga\Forms\Config\General\LoggingConfigForm;
 use Icinga\Forms\Config\General\ThemingConfigForm;
 use Icinga\Forms\ConfigForm;
@@ -30,8 +31,10 @@ class GeneralConfigForm extends ConfigForm
         $appConfigForm = new ApplicationConfigForm();
         $loggingConfigForm = new LoggingConfigForm();
         $themingConfigForm = new ThemingConfigForm();
+        $domainConfigForm = new DefaultAuthenticationDomainConfigForm();
         $this->addSubForm($appConfigForm->create($formData));
         $this->addSubForm($loggingConfigForm->create($formData));
         $this->addSubForm($themingConfigForm->create($formData));
+        $this->addSubForm($domainConfigForm->create($formData));
     }
 }

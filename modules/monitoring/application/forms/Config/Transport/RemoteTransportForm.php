@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Config\Transport;
 
@@ -94,7 +94,6 @@ class RemoteTransportForm extends Form
         }
 
         if ($useResource) {
-
             $this->loadResources();
 
             $decorators = static::$defaultElementDecorators;
@@ -146,10 +145,11 @@ class RemoteTransportForm extends Form
                 'number',
                 'port',
                 array(
-                    'required'      => true,
-                    'label'         => $this->translate('Port'),
-                    'description'   => $this->translate('SSH port to connect to on the remote Icinga instance'),
-                    'value'         => 22
+                    'required'          => true,
+                    'preserveDefault'   => true,
+                    'label'             => $this->translate('Port'),
+                    'description'       => $this->translate('SSH port to connect to on the remote Icinga instance'),
+                    'value'             => 22
                 )
             )
         ));

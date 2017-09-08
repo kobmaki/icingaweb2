@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Widget;
 
@@ -18,8 +18,8 @@ use Exception;
  * Please have a look at the available widgets in this folder to get a better
  * idea on what they should look like.
  *
- * @copyright  Copyright (c) 2013 Icinga-Web Team <info@icinga.org>
- * @author     Icinga-Web Team <info@icinga.org>
+ * @copyright  Copyright (c) 2013 Icinga-Web Team <info@icinga.com>
+ * @author     Icinga-Web Team <info@icinga.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License
  */
 abstract class AbstractWidget

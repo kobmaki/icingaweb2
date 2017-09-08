@@ -1,4 +1,4 @@
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 CREATE OR REPLACE FUNCTION unix_timestamp(timestamp with time zone) RETURNS bigint AS '
         SELECT EXTRACT(EPOCH FROM $1)::bigint AS result
@@ -35,7 +35,7 @@ ALTER TABLE ONLY "icingaweb_group"
 
 CREATE TABLE "icingaweb_group_membership" (
   "group_id"   int NOT NULL,
-  "username"   character varying(64) NOT NULL,
+  "username"   character varying(254) NOT NULL,
   "ctime"      timestamp NULL DEFAULT NULL,
   "mtime"      timestamp NULL DEFAULT NULL
 );
@@ -57,7 +57,7 @@ CREATE UNIQUE INDEX idx_icingaweb_group_membership
 );
 
 CREATE TABLE "icingaweb_user" (
-  "name"          character varying(64) NOT NULL,
+  "name"          character varying(254) NOT NULL,
   "active"        smallint NOT NULL,
   "password_hash" bytea NOT NULL,
   "ctime"         timestamp NULL DEFAULT NULL,
@@ -77,7 +77,7 @@ CREATE UNIQUE INDEX idx_icingaweb_user
 );
 
 CREATE TABLE "icingaweb_user_preference" (
-  "username" character varying(64) NOT NULL,
+  "username" character varying(254) NOT NULL,
   "name"     character varying(64) NOT NULL,
   "section"  character varying(64) NOT NULL,
   "value"    character varying(255) NOT NULL,

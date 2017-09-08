@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Command\Instance;
 
@@ -26,9 +26,7 @@ class ToggleInstanceFeaturesCommandForm extends CommandForm
     public function init()
     {
         $this->setUseFormAutosubmit();
-        $this->setTitle($this->translate('Feature Commands'));
         $this->setAttrib('class', 'inline instance-features');
-        $this->loadDefaultDecorators()->getDecorator('description')->setTag('h2');
     }
 
     /**
@@ -60,24 +58,28 @@ class ToggleInstanceFeaturesCommandForm extends CommandForm
      */
     public function createElements(array $formData = array())
     {
-        if ((bool) $this->status->notifications_enabled) {
-            if ($this->hasPermission('monitoring/command/feature/instance')) {
+        $notificationDescription = null;
+        $isIcinga2 = $this->getBackend()->isIcinga2($this->status->program_version);
+
+        if (! $isIcinga2) {
+            if ((bool) $this->status->notifications_enabled) {
+                if ($this->hasPermission('monitoring/command/feature/instance')) {
+                    $notificationDescription = sprintf(
+                        '<a aria-label="%1$s" class="action-link" title="%1$s"'
+                        . ' href="%2$s" data-base-target="_next">%3$s</a>',
+                        $this->translate('Disable notifications for a specific time on a program-wide basis'),
+                        $this->getView()->href('monitoring/health/disable-notifications'),
+                        $this->translate('Disable temporarily')
+                    );
+                } else {
+                    $notificationDescription = null;
+                }
+            } elseif ($this->status->disable_notif_expire_time) {
                 $notificationDescription = sprintf(
-                    '<a aria-label="%1$s" class="action-link" title="%1$s" href="%2$s" data-base-target="_next">%3$s</a>',
-                    $this->translate('Disable notifications for a specific time on a program-wide basis'),
-                    $this->getView()->href('monitoring/health/disable-notifications'),
-                    $this->translate('Disable temporarily')
+                    $this->translate('Notifications will be re-enabled in <strong>%s</strong>'),
+                    $this->getView()->timeUntil($this->status->disable_notif_expire_time)
                 );
-            } else {
-                $notificationDescription = null;
             }
-        } elseif ($this->status->disable_notif_expire_time) {
-            $notificationDescription = sprintf(
-                $this->translate('Notifications will be re-enabled in <strong>%s</strong>'),
-                $this->getView()->timeUntil($this->status->disable_notif_expire_time)
-            );
-        } else {
-            $notificationDescription = null;
         }
 
         $toggleDisabled = $this->hasPermission('monitoring/command/feature/instance') ? null : '';
@@ -140,7 +142,7 @@ class ToggleInstanceFeaturesCommandForm extends CommandForm
             )
         );
 
-        if (! preg_match('~^v2\.\d+\.\d+.*$~', $this->status->program_version)) {
+        if (! $isIcinga2) {
             $this->addElement(
                 'checkbox',
                 ToggleInstanceFeatureCommand::FEATURE_HOST_OBSESSING,

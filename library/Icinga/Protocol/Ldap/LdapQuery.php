@@ -1,8 +1,9 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\Ldap;
 
+use LogicException;
 use Icinga\Data\SimpleQuery;
 
 /**
@@ -37,6 +38,39 @@ class LdapQuery extends SimpleQuery
      * @var string
      */
     protected $nativeFilter;
+
+    /**
+     * Only fetch the entry at the base of the search
+     */
+    const SCOPE_BASE = 'base';
+
+    /**
+     * Fetch entries one below the base DN
+     */
+    const SCOPE_ONE = 'one';
+
+    /**
+     * Fetch all entries below the base DN
+     */
+    const SCOPE_SUB = 'sub';
+
+    /**
+     * All available scopes
+     *
+     * @var array
+     */
+    public static $scopes = array(
+        LdapQuery::SCOPE_BASE,
+        LdapQuery::SCOPE_ONE,
+        LdapQuery::SCOPE_SUB
+    );
+
+    /**
+     * LDAP search scope (default: SCOPE_SUB)
+     *
+     * @var string
+     */
+    protected $scope = LdapQuery::SCOPE_SUB;
 
     /**
      * Initialize this query
@@ -222,5 +256,39 @@ class LdapQuery extends SimpleQuery
     public function __toString()
     {
         return $this->renderFilter();
+    }
+
+    /**
+     * Get LDAP search scope
+     *
+     * @return string
+     */
+    public function getScope()
+    {
+        return $this->scope;
+    }
+
+    /**
+     * Set LDAP search scope
+     *
+     * Valid: sub one base (Default: sub)
+     *
+     * @param  string          $scope
+     *
+     * @return LdapQuery
+     *
+     * @throws LogicException  If scope value is invalid
+     */
+    public function setScope($scope)
+    {
+        if (! in_array($scope, static::$scopes)) {
+            throw new LogicException(
+                'Can\'t set scope %d, it is is invalid. Use one of %s or LdapQuery\'s constants.',
+                $scope,
+                implode(', ', static::$scopes)
+            );
+        }
+        $this->scope = $scope;
+        return $this;
     }
 }

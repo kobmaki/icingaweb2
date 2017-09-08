@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Repository;
 
@@ -11,7 +11,7 @@ use Icinga\Data\Selectable;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Exception\QueryException;
 use Icinga\Exception\StatementException;
-use Icinga\Util\String;
+use Icinga\Util\StringHelper;
 
 /**
  * Abstract base class for concrete repository implementations
@@ -67,7 +67,7 @@ abstract class Repository implements Selectable
      * The query columns being provided
      *
      * This must be initialized by concrete repository implementations, in the following format
-     * <pre><code>
+     * <code>
      *  array(
      *      'baseTable' => array(
      *          'column1',
@@ -75,7 +75,7 @@ abstract class Repository implements Selectable
      *          'alias2' => 'column3'
      *      )
      *  )
-     * </code></pre>
+     * </code>
      *
      * @var array
      */
@@ -91,19 +91,33 @@ abstract class Repository implements Selectable
     protected $blacklistedQueryColumns;
 
     /**
+     * Whether the blacklisted query columns are in the legacy format
+     *
+     * @var bool
+     */
+    protected $legacyBlacklistedQueryColumns;
+
+    /**
      * The filter columns being provided
      *
      * This may be intialized by concrete repository implementations, in the following format
-     * <pre><code>
+     * <code>
      *  array(
      *      'alias_or_column_name',
      *      'label_to_show_in_the_filter_editor' => 'alias_or_column_name'
      *  )
-     * </code></pre>
+     * </code>
      *
      * @var array
      */
     protected $filterColumns;
+
+    /**
+     * Whether the provided filter columns are in the legacy format
+     *
+     * @var bool
+     */
+    protected $legacyFilterColumns;
 
     /**
      * The search columns (or aliases) being provided
@@ -113,10 +127,17 @@ abstract class Repository implements Selectable
     protected $searchColumns;
 
     /**
+     * Whether the provided search columns are in the legacy format
+     *
+     * @var bool
+     */
+    protected $legacySearchColumns;
+
+    /**
      * The sort rules to be applied on a query
      *
      * This may be initialized by concrete repository implementations, in the following format
-     * <pre><code>
+     * <code>
      *  array(
      *      'alias_or_column_name' => array(
      *          'order'     => 'asc'
@@ -133,12 +154,19 @@ abstract class Repository implements Selectable
      *          // Ascendant sort by default
      *      )
      *  )
-     * </code></pre>
+     * </code>
      * Note that it's mandatory to supply the alias name in case there is one.
      *
      * @var array
      */
     protected $sortRules;
+
+    /**
+     * Whether the provided sort rules are in the legacy format
+     *
+     * @var bool
+     */
+    protected $legacySortRules;
 
     /**
      * The value conversion rules to apply on a query or statement
@@ -186,9 +214,10 @@ abstract class Repository implements Selectable
     /**
      * Create a new repository object
      *
-     * @param   Selectable  $ds     The datasource to use
+     * @param   Selectable|null $ds The datasource to use.
+     *                              Only pass null if you have overridden {@link getDataSource()}!
      */
-    public function __construct(Selectable $ds)
+    public function __construct(Selectable $ds = null)
     {
         $this->ds = $ds;
         $this->aliasTableMap = array();
@@ -206,7 +235,6 @@ abstract class Repository implements Selectable
      */
     protected function init()
     {
-
     }
 
     /**
@@ -235,12 +263,23 @@ abstract class Repository implements Selectable
     }
 
     /**
-     * Return the datasource being used
+     * Return the datasource being used for the given table
+     *
+     * @param   string  $table
      *
      * @return  Selectable
+     *
+     * @throws  ProgrammingError    In case no datasource is available
      */
-    public function getDataSource()
+    public function getDataSource($table = null)
     {
+        if ($this->ds === null) {
+            throw new ProgrammingError(
+                'No data source available. It is required to either pass it'
+                . ' at initialization time or by overriding this method.'
+            );
+        }
+
         return $this->ds;
     }
 
@@ -323,25 +362,45 @@ abstract class Repository implements Selectable
      *
      * Calls $this->initializeBlacklistedQueryColumns() in case $this->blacklistedQueryColumns is null.
      *
+     * @param   string  $table
+     *
      * @return  array
      */
-    public function getBlacklistedQueryColumns()
+    public function getBlacklistedQueryColumns($table = null)
     {
         if ($this->blacklistedQueryColumns === null) {
-            $this->blacklistedQueryColumns = $this->initializeBlacklistedQueryColumns();
+            $this->legacyBlacklistedQueryColumns = false;
+
+            $blacklistedQueryColumns = $this->initializeBlacklistedQueryColumns($table);
+            if (is_int(key($blacklistedQueryColumns))) {
+                $this->blacklistedQueryColumns[$table] = $blacklistedQueryColumns;
+            } else {
+                $this->blacklistedQueryColumns = $blacklistedQueryColumns;
+            }
+        } elseif ($this->legacyBlacklistedQueryColumns === null) {
+            $this->legacyBlacklistedQueryColumns = is_int(key($this->blacklistedQueryColumns));
         }
 
-        return $this->blacklistedQueryColumns;
+        if ($this->legacyBlacklistedQueryColumns) {
+            return $this->blacklistedQueryColumns;
+        } elseif (! isset($this->blacklistedQueryColumns[$table])) {
+            $this->blacklistedQueryColumns[$table] = $this->initializeBlacklistedQueryColumns($table);
+        }
+
+        return $this->blacklistedQueryColumns[$table];
     }
 
     /**
-     * Overwrite this in your repository implementation in case you
-     * need to initialize the blacklisted query columns lazily
+     * Overwrite this in your repository implementation in case you need to initialize the
+     * blacklisted query columns lazily or dependent on a query's current base table
+     *
+     * @param   string  $table
      *
      * @return  array
      */
     protected function initializeBlacklistedQueryColumns()
     {
+        // $table is not part of the signature due to PHP strict standards
         return array();
     }
 
@@ -350,24 +409,47 @@ abstract class Repository implements Selectable
      *
      * Calls $this->initializeFilterColumns() in case $this->filterColumns is null.
      *
+     * @param   string  $table
+     *
      * @return  array
      */
-    public function getFilterColumns()
+    public function getFilterColumns($table = null)
     {
         if ($this->filterColumns === null) {
-            $this->filterColumns = $this->initializeFilterColumns();
+            $this->legacyFilterColumns = false;
+
+            $filterColumns = $this->initializeFilterColumns($table);
+            $foundTables = array_intersect_key($this->getQueryColumns(), $filterColumns);
+            if (empty($foundTables)) {
+                $this->filterColumns[$table] = $filterColumns;
+            } else {
+                $this->filterColumns = $filterColumns;
+            }
+        } elseif ($this->legacyFilterColumns === null) {
+            $foundTables = array_intersect_key($this->getQueryColumns(), $this->filterColumns);
+            $this->legacyFilterColumns = empty($foundTables);
         }
 
-        return $this->filterColumns;
+        if ($this->legacyFilterColumns) {
+            return $this->filterColumns;
+        } elseif (! isset($this->filterColumns[$table])) {
+            $this->filterColumns[$table] = $this->initializeFilterColumns($table);
+        }
+
+        return $this->filterColumns[$table];
     }
 
     /**
-     * Overwrite this in your repository implementation in case you need to initialize the filter columns lazily
+     * Overwrite this in your repository implementation in case you need to initialize
+     * the filter columns lazily or dependent on a query's current base table
+     *
+     * @param   string  $table
      *
      * @return  array
      */
     protected function initializeFilterColumns()
     {
+        // $table is not part of the signature due to PHP strict standards
         return array();
     }
 
@@ -376,24 +458,45 @@ abstract class Repository implements Selectable
      *
      * Calls $this->initializeSearchColumns() in case $this->searchColumns is null.
      *
+     * @param   string  $table
+     *
      * @return  array
      */
-    public function getSearchColumns()
+    public function getSearchColumns($table = null)
     {
         if ($this->searchColumns === null) {
-            $this->searchColumns = $this->initializeSearchColumns();
+            $this->legacySearchColumns = false;
+
+            $searchColumns = $this->initializeSearchColumns($table);
+            if (is_int(key($searchColumns))) {
+                $this->searchColumns[$table] = $searchColumns;
+            } else {
+                $this->searchColumns = $searchColumns;
+            }
+        } elseif ($this->legacySearchColumns === null) {
+            $this->legacySearchColumns = is_int(key($this->searchColumns));
         }
 
-        return $this->searchColumns;
+        if ($this->legacySearchColumns) {
+            return $this->searchColumns;
+        } elseif (! isset($this->searchColumns[$table])) {
+            $this->searchColumns[$table] = $this->initializeSearchColumns($table);
+        }
+
+        return $this->searchColumns[$table];
     }
 
     /**
-     * Overwrite this in your repository implementation in case you need to initialize the search columns lazily
+     * Overwrite this in your repository implementation in case you need to initialize
+     * the search columns lazily or dependent on a query's current base table
+     *
+     * @param   string  $table
      *
      * @return  array
      */
     protected function initializeSearchColumns()
     {
+        // $table is not part of the signature due to PHP strict standards
         return array();
     }
 
@@ -402,24 +505,47 @@ abstract class Repository implements Selectable
      *
      * Calls $this->initializeSortRules() in case $this->sortRules is null.
      *
+     * @param   string  $table
+     *
      * @return  array
      */
-    public function getSortRules()
+    public function getSortRules($table = null)
     {
         if ($this->sortRules === null) {
-            $this->sortRules = $this->initializeSortRules();
+            $this->legacySortRules = false;
+
+            $sortRules = $this->initializeSortRules($table);
+            $foundTables = array_intersect_key($this->getQueryColumns(), $sortRules);
+            if (empty($foundTables)) {
+                $this->sortRules[$table] = $sortRules;
+            } else {
+                $this->sortRules = $sortRules;
+            }
+        } elseif ($this->legacySortRules === null) {
+            $foundTables = array_intersect_key($this->getQueryColumns(), $this->sortRules);
+            $this->legacyFilterColumns = empty($foundTables);
         }
 
-        return $this->sortRules;
+        if ($this->legacySortRules) {
+            return $this->sortRules;
+        } elseif (! isset($this->sortRules[$table])) {
+            $this->sortRules[$table] = $this->initializeSortRules($table);
+        }
+
+        return $this->sortRules[$table];
     }
 
     /**
-     * Overwrite this in your repository implementation in case you need to initialize the sort rules lazily
+     * Overwrite this in your repository implementation in case you need to initialize
+     * the sort rules lazily or dependent on a query's current base table
+     *
+     * @param   string  $table
      *
      * @return  array
      */
     protected function initializeSortRules()
     {
+        // $table is not part of the signature due to PHP strict standards
         return array();
     }
 
@@ -789,7 +915,7 @@ abstract class Repository implements Selectable
     protected function retrieveCommaSeparatedString($value)
     {
         if ($value && is_string($value)) {
-            $value = String::trimSplit($value);
+            $value = StringHelper::trimSplit($value);
         } elseif ($value !== null) {
             throw new ProgrammingError('Cannot retrieve value "%s" as array. It\'s not a string', $value);
         }
@@ -810,8 +936,7 @@ abstract class Repository implements Selectable
             return $value;
         }
 
-        if (
-            ($dateTime = DateTime::createFromFormat('YmdHis.uO', $value)) !== false
+        if (($dateTime = DateTime::createFromFormat('YmdHis.uO', $value)) !== false
             || ($dateTime = DateTime::createFromFormat('YmdHis.uZ', $value)) !== false
             || ($dateTime = DateTime::createFromFormat('YmdHis.u', $value)) !== false
             || ($dateTime = DateTime::createFromFormat('YmdHis', $value)) !== false
@@ -900,11 +1025,12 @@ abstract class Repository implements Selectable
             throw new ProgrammingError('Table name "%s" not found', $table);
         }
 
-        $blacklist = $this->getBlacklistedQueryColumns();
+        $blacklist = $this->getBlacklistedQueryColumns($table);
         $columns = array();
         foreach ($queryColumns[$table] as $alias => $column) {
-            if (! in_array(is_string($alias) ? $alias : $column, $blacklist)) {
-                $columns[$alias] = $this->resolveQueryColumnAlias($table, $alias);
+            $name = is_string($alias) ? $alias : $column;
+            if (! in_array($name, $blacklist)) {
+                $columns[$alias] = $this->resolveQueryColumnAlias($table, $name);
             }
         }
 
@@ -968,13 +1094,17 @@ abstract class Repository implements Selectable
             return $aliasTableMap[$alias] === $table;
         }
 
+        $prefixedAlias = $table . '.' . $alias;
+        if (isset($aliasTableMap[$prefixedAlias])) {
+            return true;
+        }
+
         $columnTableMap = $this->getColumnTableMap();
         if (isset($columnTableMap[$alias])) {
             return $columnTableMap[$alias] === $table;
         }
 
-        $prefixedAlias = $table . '.' . $alias;
-        return isset($aliasTableMap[$prefixedAlias]) || isset($columnTableMap[$prefixedAlias]);
+        return isset($columnTableMap[$prefixedAlias]);
     }
 
     /**
@@ -993,7 +1123,7 @@ abstract class Repository implements Selectable
             return false;
         }
 
-        return !in_array($alias, $this->getBlacklistedQueryColumns())
+        return !in_array($alias, $this->getBlacklistedQueryColumns($table))
             && $this->validateQueryColumnAssociation($table, $name);
     }
 
@@ -1018,7 +1148,7 @@ abstract class Repository implements Selectable
             throw new QueryException(t('Query column "%s" not found'), $name);
         }
 
-        if (in_array($alias, $this->getBlacklistedQueryColumns())) {
+        if (in_array($alias, $this->getBlacklistedQueryColumns($table))) {
             throw new QueryException(t('Column "%s" cannot be queried'), $name);
         }
 
@@ -1106,7 +1236,7 @@ abstract class Repository implements Selectable
             throw new StatementException('Statement column "%s" not found', $name);
         }
 
-        if (in_array($alias, $this->getBlacklistedQueryColumns())) {
+        if (in_array($alias, $this->getBlacklistedQueryColumns($table))) {
             throw new StatementException('Column "%s" cannot be referenced in a statement', $name);
         }
 

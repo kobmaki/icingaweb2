@@ -1,9 +1,10 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Backend\Livestatus\Query;
 
 use Icinga\Protocol\Livestatus\Query;
+
 // TODO: still VERRRRY ugly
 class DowntimeQuery extends Query
 {
@@ -41,5 +42,4 @@ class DowntimeQuery extends Query
     {
         return $res['is_service'] ? 'service' : 'host';
     }
-
 }

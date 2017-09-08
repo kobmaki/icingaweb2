@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Backend\Ido\Query;
 
@@ -131,11 +131,6 @@ class ServicestatusQuery extends IdoQuery
                             ELSE 4
                         END
                 END
-            END
-            +
-            CASE WHEN hs.state_type = 1
-                THEN 8
-                ELSE 0
             END',
             'host_state'                            => 'CASE WHEN hs.has_been_checked = 0 OR hs.has_been_checked IS NULL THEN 99 ELSE hs.current_state END',
             'host_state_type'                       => 'hs.state_type',
@@ -197,6 +192,7 @@ class ServicestatusQuery extends IdoQuery
             'service_last_hard_state_change'            => 'UNIX_TIMESTAMP(ss.last_hard_state_change)',
             'service_last_notification'                 => 'UNIX_TIMESTAMP(ss.last_notification)',
             'service_last_state_change'                 => 'UNIX_TIMESTAMP(ss.last_state_change)',
+            'service_last_state_change_ts'              => 'ss.last_state_change',
             'service_last_time_critical'                => 'ss.last_time_critical',
             'service_last_time_ok'                      => 'ss.last_time_ok',
             'service_last_time_unknown'                 => 'ss.last_time_unknown',
@@ -271,11 +267,6 @@ class ServicestatusQuery extends IdoQuery
                                  END
                          END
                      END
-            END
-            +
-            CASE WHEN ss.state_type = 1
-                THEN 8
-                ELSE 0
             END',
             'service_state'                             => 'CASE WHEN ss.has_been_checked = 0 OR ss.has_been_checked IS NULL THEN 99 ELSE ss.current_state END',
             'service_state_type'                        => 'ss.state_type',

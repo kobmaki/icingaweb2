@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Command\Object;
 
@@ -72,6 +72,7 @@ class DeleteDowntimesCommandForm extends CommandForm
             $delDowntime = new DeleteDowntimeCommand();
             $delDowntime
                 ->setDowntimeId($downtime->id)
+                ->setDowntimeName($downtime->name)
                 ->setIsService(isset($downtime->service_description));
             $this->getTransport($this->request)->send($delDowntime);
         }

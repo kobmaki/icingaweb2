@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Command\Object;
 
@@ -67,7 +67,8 @@ class ScheduleServiceDowntimeCommandForm extends ObjectsCommandForm
                         'If you work with other administrators, you may find it useful to share information about the'
                         . ' the host or service that is having problems. Make sure you enter a brief description of'
                         . ' what you are doing.'
-                    )
+                    ),
+                    'attribs'       => array('class' => 'autofocus')
                 )
             ),
             array(
@@ -197,6 +198,22 @@ class ScheduleServiceDowntimeCommandForm extends ObjectsCommandForm
      */
     public function onSuccess()
     {
+        $end = $this->getValue('end')->getTimestamp();
+        if ($end <= $this->getValue('start')->getTimestamp()) {
+            $endElement = $this->_elements['end'];
+            $endElement->setValue($endElement->getValue()->format($endElement->getFormat()));
+            $endElement->addError($this->translate('The end time must be greater than the start time'));
+            return false;
+        }
+
+        $now = new DateTime;
+        if ($end <= $now->getTimestamp()) {
+            $endElement = $this->_elements['end'];
+            $endElement->setValue($endElement->getValue()->format($endElement->getFormat()));
+            $endElement->addError($this->translate('A downtime must not be in the past'));
+            return false;
+        }
+
         foreach ($this->objects as $object) {
             /** @var \Icinga\Module\Monitoring\Object\Service $object */
             $downtime = new ScheduleServiceDowntimeCommand();

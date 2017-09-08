@@ -1,12 +1,15 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
+@badge-color: @body-bg-color;
 @badge-line-height: 1.2;
 @badge-padding: 0.25em;
 
 .badge {
+  .bg-stateful();
   .rounded-corners();
+
   background-color: @gray-light;
-  color: @text-color-inverted;
+  color: @badge-color;
   display: inline-block;
   font-family: @font-family-wide;
   font-size: @font-size-small;
@@ -16,36 +19,4 @@
   text-align: center;
   vertical-align: middle;
   white-space: nowrap;
-
-  &.state-ok {
-    .bg-color-ok();
-  }
-
-  &.state-up {
-    .bg-color-up();
-  }
-
-  &.state-warning {
-    .bg-color-warning();
-  }
-
-  &.state-critical {
-    .bg-color-critical();
-  }
-
-  &.state-down {
-    .bg-color-down();
-  }
-
-  &.state-unreachable {
-    .bg-color-unreachable();
-  }
-
-  &.state-unknown {
-    .bg-color-unknown();
-  }
-
-  &.state-pending {
-    .bg-color-pending();
-  }
 }

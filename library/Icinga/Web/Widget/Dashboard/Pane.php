@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Widget\Dashboard;
 
@@ -40,7 +40,7 @@ class Pane extends UserWidget
      *
      * @var bool
      */
-    private $disabled;
+    private $disabled = false;
 
     /**
      * Create a new pane
@@ -323,6 +323,4 @@ class Pane extends UserWidget
     {
         return $this->disabled;
     }
-
-
 }

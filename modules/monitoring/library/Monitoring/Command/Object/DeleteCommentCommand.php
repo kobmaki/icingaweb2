@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Command\Object;
 
@@ -16,6 +16,15 @@ class DeleteCommentCommand extends IcingaCommand
      * @var int
      */
     protected $commentId;
+
+    /**
+     * Name of the comment (Icinga 2.4+)
+     *
+     * Required for removing the comment via Icinga 2's API.
+     *
+     * @var string
+     */
+    protected $commentName;
 
     /**
      * Whether the command affects a service comment
@@ -44,6 +53,33 @@ class DeleteCommentCommand extends IcingaCommand
     public function setCommentId($commentId)
     {
         $this->commentId = (int) $commentId;
+        return $this;
+    }
+
+    /**
+     * Get the name of the comment (Icinga 2.4+)
+     *
+     * Required for removing the comment via Icinga 2's API.
+     *
+     * @return string
+     */
+    public function getCommentName()
+    {
+        return $this->commentName;
+    }
+
+    /**
+     * Set the name of the comment (Icinga 2.4+)
+     *
+     * Required for removing the comment via Icinga 2's API.
+     *
+     * @param   string  $commentName
+     *
+     * @return  $this
+     */
+    public function setCommentName($commentName)
+    {
+        $this->commentName = $commentName;
         return $this;
     }
 

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Application;
 
@@ -416,13 +416,12 @@ class Config implements Countable, Iterator, Selectable
             self::$modules[$modulename] = array();
         }
 
-        $moduleConfigs = self::$modules[$modulename];
-        if (! isset($moduleConfigs[$configname]) || $fromDisk) {
-            $moduleConfigs[$configname] = static::fromIni(
+        if (! isset(self::$modules[$modulename][$configname]) || $fromDisk) {
+            self::$modules[$modulename][$configname] = static::fromIni(
                 static::resolvePath('modules/' . $modulename . '/' . $configname . '.ini')
             );
         }
-        return $moduleConfigs[$configname];
+        return self::$modules[$modulename][$configname];
     }
 
     /**
@@ -472,11 +471,18 @@ class Config implements Countable, Iterator, Selectable
             $filename = $type . 's.ini';
         }
 
-        return static::resolvePath(
-            ($username ? 'preferences' . DIRECTORY_SEPARATOR . $username : 'navigation')
-            . DIRECTORY_SEPARATOR
-            . $filename
-        );
+        if ($username) {
+            $path = static::resolvePath(implode(DIRECTORY_SEPARATOR, array('preferences', $username, $filename)));
+            if (realpath($path) === false) {
+                $path = static::resolvePath(implode(
+                    DIRECTORY_SEPARATOR,
+                    array('preferences', strtolower($username), $filename)
+                ));
+            }
+        } else {
+            $path = static::resolvePath('navigation' . DIRECTORY_SEPARATOR . $filename);
+        }
+        return $path;
     }
 
     /**

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Cli;
 
@@ -50,11 +50,13 @@ class Documentation
             $d .= '  ' . $module . "\n";
         }
         $d .= "\nGlobal options:\n\n"
-            . "  --verbose    Be verbose\n"
-            . "  --debug      Show debug output\n"
-            . "  --help       Show help\n"
-            . "  --benchmark  Show benchmark summary\n"
-            . "  --watch [s]  Refresh output every <s> seconds (default: 5)\n"
+            . "  --log [t]       Log to <t>, either stderr, file or syslog (default: stderr)\n"
+            . "  --log-path <f>  Which file to log into in case of --log file\n"
+            . "  --verbose       Be verbose\n"
+            . "  --debug         Show debug output\n"
+            . "  --help          Show help\n"
+            . "  --benchmark     Show benchmark summary\n"
+            . "  --watch [s]     Refresh output every <s> seconds (default: 5)\n"
             ;
         $d .= "\nShow help on a specific command : icingacli help <command>"
             . "\nShow help on a specific module  : icingacli help <module>"
@@ -89,6 +91,12 @@ class Documentation
         return $d;
     }
 
+    /**
+     * @param   Command $command
+     * @param   string  $name
+     *
+     * @return  string
+     */
     protected function showCommandActions($command, $name)
     {
         $actions = $command->listActions();
@@ -101,7 +109,11 @@ class Documentation
                 $this->getMethodTitle($command, $action)
             );
         }
-        $d .= "\nShow help on a specific action: icingacli help $name <action>\n";
+        $d .= "\nShow help on a specific action: icingacli help ";
+        if ($command->isModule()) {
+            $d .= $command->getModuleName() . ' ';
+        }
+        $d .= "$name <action>\n";
         return $d;
     }
 

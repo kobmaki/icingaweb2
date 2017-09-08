@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Application;
 
@@ -86,7 +86,8 @@ class Platform
 
         foreach (array('/etc/os-release', '/usr/lib/os-release') as $osReleaseFile) {
             if (false === ($osRelease = @file(
-                $osReleaseFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
+                $osReleaseFile,
+                FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES
             ))) {
                 continue;
             }
@@ -362,7 +363,19 @@ class Platform
      */
     public static function hasMysqlSupport()
     {
-        return static::extensionLoaded('mysql') && static::classExists('Zend_Db_Adapter_Pdo_Mysql');
+        return static::extensionLoaded('pdo_mysql') && static::classExists('Zend_Db_Adapter_Pdo_Mysql');
+    }
+
+    /**
+     * Return whether it's possible to connect to a IBM DB2 database
+     *
+     * Checks whether the ibm pdo extension has been loaded and the Zend framework adapter for IBM is available
+     *
+     * @return  bool
+     */
+    public static function hasIbmSupport()
+    {
+      return static::extensionLoaded('pdo_ibm') && static::classExists('Zend_Db_Adapter_Pdo_Ibm');
     }
 
     /**
@@ -398,6 +411,6 @@ class Platform
      */
     public static function hasPostgresqlSupport()
     {
-        return static::extensionLoaded('pgsql') && static::classExists('Zend_Db_Adapter_Pdo_Pgsql');
+        return static::extensionLoaded('pdo_pgsql') && static::classExists('Zend_Db_Adapter_Pdo_Pgsql');
     }
 }

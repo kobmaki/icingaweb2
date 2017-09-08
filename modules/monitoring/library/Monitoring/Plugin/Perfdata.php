@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Plugin;
 
@@ -282,15 +282,14 @@ class Perfdata
         $parts = explode(';', $this->perfdataValue);
 
         $matches = array();
-        if (preg_match('@^(\d+(\.\d+)?)([a-zA-Z%]{1,2})$@', $parts[0], $matches)) {
+        if (preg_match('@^(-?\d+(\.\d+)?)([a-zA-Z%]{1,2})$@', $parts[0], $matches)) {
             $this->unit = strtolower($matches[3]);
             $this->value = self::convert($matches[1], $this->unit);
         } else {
             $this->value = self::convert($parts[0]);
         }
 
-        switch (count($parts))
-        {
+        switch (count($parts)) {
             case 5:
                 if ($parts[4] !== '') {
                     $this->maxValue = self::convert($parts[4], $this->unit);
@@ -317,8 +316,7 @@ class Perfdata
     protected static function convert($value, $fromUnit = null)
     {
         if (is_numeric($value)) {
-            switch ($fromUnit)
-            {
+            switch ($fromUnit) {
                 case 'us':
                     return $value / pow(10, 6);
                 case 'ms':
@@ -360,7 +358,6 @@ class Perfdata
             if (isset($criticalThreshold) && $this->value <= $criticalThreshold) {
                 $pieState = self::PERFDATA_CRITICAL;
             }
-
         } else {
             // TODO: Use standard perfdata range format to decide the state #8194
 
@@ -446,10 +443,18 @@ class Perfdata
         $parts = array(
             'label' => $this->getLabel(),
             'value' => $this->format($this->getvalue()),
-            'min' => isset($this->minValue) && !$this->isPercentage() ? $this->format($this->minValue) : '',
-            'max' => isset($this->maxValue) && !$this->isPercentage() ? $this->format($this->maxValue) : '',
-            'warn' => isset($this->warningThreshold) ? $this->format(self::convert($this->warningThreshold, $this->unit)) : '',
-            'crit' => isset($this->criticalThreshold) ? $this->format(self::convert($this->criticalThreshold, $this->unit)) : ''
+            'min' => isset($this->minValue) && !$this->isPercentage()
+                ? $this->format($this->minValue)
+                : '',
+            'max' => isset($this->maxValue) && !$this->isPercentage()
+                ? $this->format($this->maxValue)
+                : '',
+            'warn' => isset($this->warningThreshold)
+                ? $this->format(self::convert($this->warningThreshold, $this->unit))
+                : '',
+            'crit' => isset($this->criticalThreshold)
+                ? $this->format(self::convert($this->criticalThreshold, $this->unit))
+                : ''
         );
         return $parts;
     }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Authentication\User;
 
@@ -14,7 +14,7 @@ use Icinga\Repository\RepositoryQuery;
 use Icinga\Protocol\Ldap\LdapException;
 use Icinga\User;
 
-class LdapUserBackend extends LdapRepository implements UserBackendInterface, Inspectable
+class LdapUserBackend extends LdapRepository implements UserBackendInterface, DomainAwareInterface, Inspectable
 {
     /**
      * The base DN to use for a query
@@ -43,6 +43,13 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
      * @var string
      */
     protected $filter;
+
+    /**
+     * The domain the backend is responsible for
+     *
+     * @var string
+     */
+    protected $domain;
 
     /**
      * The columns which are not permitted to be queried
@@ -174,20 +181,27 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
         return $this->filter;
     }
 
+    public function getDomain()
+    {
+        return $this->domain;
+    }
+
     /**
-     * Apply the given configuration to this backend
+     * Set the domain the backend is responsible for
      *
-     * @param   ConfigObject    $config
+     * @param   string  $domain
      *
      * @return  $this
      */
-    public function setConfig(ConfigObject $config)
+    public function setDomain($domain)
     {
-        return $this
-            ->setBaseDn($config->base_dn)
-            ->setUserClass($config->user_class)
-            ->setUserNameAttribute($config->user_name_attribute)
-            ->setFilter($config->filter);
+        $domain = trim($domain);
+
+        if (strlen($domain)) {
+            $this->domain = $domain;
+        }
+
+        return $this;
     }
 
     /**
@@ -255,7 +269,7 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
             t('Username')       => 'user_name',
             t('Active')         => 'is_active',
             t('Created At')     => 'created_at',
-            t('Last Modified')  => 'last_modified'
+            t('Last modified')  => 'last_modified'
         );
     }
 
@@ -372,10 +386,20 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
      */
     public function authenticate(User $user, $password)
     {
+        if ($this->domain !== null) {
+            if (! $user->hasDomain() || strtolower($user->getDomain()) !== $this->domain) {
+                return false;
+            }
+
+            $username = $user->getLocalUsername();
+        } else {
+            $username = $user->getUsername();
+        }
+
         try {
             $userDn = $this
                 ->select()
-                ->where('user_name', str_replace('*', '', $user->getUsername()))
+                ->where('user_name', str_replace('*', '', $username))
                 ->getQuery()
                 ->setUsePagedResults(false)
                 ->fetchDn();
@@ -392,7 +416,7 @@ class LdapUserBackend extends LdapRepository implements UserBackendInterface, In
         } catch (LdapException $e) {
             throw new AuthenticationException(
                 'Failed to authenticate user "%s" against backend "%s". An exception was thrown:',
-                $user->getUsername(),
+                $username,
                 $this->getName(),
                 $e
             );

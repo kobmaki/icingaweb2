@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Authentication\User;
 
@@ -218,6 +218,7 @@ class UserBackend implements ConfigAwareFactory
                 $backend->setUserClass($backendConfig->get('user_class', 'user'));
                 $backend->setUserNameAttribute($backendConfig->get('user_name_attribute', 'sAMAccountName'));
                 $backend->setFilter($backendConfig->filter);
+                $backend->setDomain($backendConfig->domain);
                 break;
             case 'ldap':
                 $backend = new LdapUserBackend($resource);
@@ -225,6 +226,7 @@ class UserBackend implements ConfigAwareFactory
                 $backend->setUserClass($backendConfig->get('user_class', 'inetOrgPerson'));
                 $backend->setUserNameAttribute($backendConfig->get('user_name_attribute', 'uid'));
                 $backend->setFilter($backendConfig->filter);
+                $backend->setDomain($backendConfig->domain);
                 break;
         }
 

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Authentication;
 
@@ -118,6 +118,8 @@ class AuthChain implements Authenticatable, Iterator
                 continue;
             }
             if ($authenticated) {
+                $user->setAdditional('backend_name', $backend->getName());
+                $user->setAdditional('backend_type', $this->config->current()->get('backend'));
                 return true;
             }
         }
@@ -240,7 +242,9 @@ class AuthChain implements Authenticatable, Iterator
         } catch (ConfigurationError $e) {
             Logger::error(
                 new ConfigurationError(
-                    'Can\'t create authentication backend "%s". An exception was thrown:',  $name,  $e
+                    'Can\'t create authentication backend "%s". An exception was thrown:',
+                    $name,
+                    $e
                 )
             );
             $this->next();

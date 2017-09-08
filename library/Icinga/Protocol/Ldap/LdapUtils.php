@@ -1,13 +1,13 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\Ldap;
 
 /**
  * This class provides useful LDAP-related functions
  *
- * @copyright  Copyright (c) 2013 Icinga-Web Team <info@icinga.org>
- * @author     Icinga-Web Team <info@icinga.org>
+ * @copyright  Copyright (c) 2013 Icinga-Web Team <info@icinga.com>
+ * @author     Icinga-Web Team <info@icinga.com>
  * @package    Icinga\Protocol\Ldap
  * @license    http://www.gnu.org/copyleft/gpl.html GNU General Public License
  */
@@ -28,9 +28,11 @@ class LdapUtils
         $res = ldap_explode_dn($dn, $with_type ? 0 : 1);
 
         foreach ($res as $k => $v) {
-            $res[$k] = preg_replace(
-                '/\\\([0-9a-f]{2})/ei',
-                "chr(hexdec('\\1'))",
+            $res[$k] = preg_replace_callback(
+                '/\\\([0-9a-f]{2})/i',
+                function ($m) {
+                    return chr(hexdec($m[1]));
+                },
                 $v
             );
         }

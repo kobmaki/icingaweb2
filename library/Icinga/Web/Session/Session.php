@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Session;
 
@@ -32,7 +32,8 @@ abstract class Session extends SessionNamespace
     /**
      * Persists changes to the underlying session implementation
      */
-    public function write() {
+    public function write()
+    {
         throw new NotImplementedError('You are required to implement write() in your session implementation');
     }
 

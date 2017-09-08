@@ -1,11 +1,12 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Application\Logger\Writer;
 
 use Icinga\Data\ConfigObject;
 use Icinga\Application\Logger;
 use Icinga\Application\Logger\LogWriter;
+use Icinga\Exception\ConfigurationError;
 
 /**
  * Log to the syslog service
@@ -32,7 +33,15 @@ class SyslogWriter extends LogWriter
      * @var array
      */
     public static $facilities = array(
-        'user' => LOG_USER
+        'user'      => LOG_USER,
+        'local0'    => LOG_LOCAL0,
+        'local1'    => LOG_LOCAL1,
+        'local2'    => LOG_LOCAL2,
+        'local3'    => LOG_LOCAL3,
+        'local4'    => LOG_LOCAL4,
+        'local5'    => LOG_LOCAL5,
+        'local6'    => LOG_LOCAL6,
+        'local7'    => LOG_LOCAL7
     );
 
     /**
@@ -55,7 +64,16 @@ class SyslogWriter extends LogWriter
     public function __construct(ConfigObject $config)
     {
         $this->ident = $config->get('application', 'icingaweb2');
-        $this->facility = static::$facilities['user'];
+
+        $configuredFacility = $config->get('facility', 'user');
+        if (! isset(static::$facilities[$configuredFacility])) {
+            throw new ConfigurationError(
+                'Invalid logging facility: "%s" (expected one of: %s)',
+                $configuredFacility,
+                implode(', ', array_keys(static::$facilities))
+            );
+        }
+        $this->facility = static::$facilities[$configuredFacility];
     }
 
     /**

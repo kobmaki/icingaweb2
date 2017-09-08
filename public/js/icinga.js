@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /**
  * Icinga starts here.
@@ -69,10 +69,10 @@
          */
         this.modules = {};
 
-        var self = this;
+        var _this = this;
         $(document).ready(function () {
-            self.initialize();
-            self = null;
+            _this.initialize();
+            _this = null;
         });
     };
 
@@ -94,9 +94,9 @@
             this.loader     = new Icinga.Loader(this);
             this.events     = new Icinga.Events(this);
             this.history    = new Icinga.History(this);
-            var self = this;
+            var _this = this;
             $.each(Icinga.Behaviors, function(name, Behavior) {
-                self.behaviors[name.toLowerCase()] = new Behavior(self);
+                _this.behaviors[name.toLowerCase()] = new Behavior(_this);
             });
 
             this.timezone.initialize();
@@ -217,7 +217,7 @@
                 $ = undefined;
 
                 oldjQuery.getScript(
-                    oldConfig.baseUrl + 'js/icinga.min.js'
+                    oldConfig.baseUrl.replace(/\/$/, '') + '/js/icinga.min.js'
                 ).done(function () {
                     var jQuery = window.jQuery;
                     window.icinga = new window.Icinga(oldConfig);

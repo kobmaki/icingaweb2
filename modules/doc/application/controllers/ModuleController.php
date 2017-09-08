@@ -1,11 +1,14 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Doc\Controllers;
 
+use finfo;
+use SplFileInfo;
 use Icinga\Application\Icinga;
 use Icinga\Module\Doc\DocController;
 use Icinga\Module\Doc\Exception\DocException;
+use Icinga\Web\Url;
 
 class ModuleController extends DocController
 {
@@ -53,6 +56,11 @@ class ModuleController extends DocController
             }
         }
         $this->view->modules = $modules;
+        $this->getTabs()->add('module-documentation', array(
+            'active'    => true,
+            'title'     => $this->translate('Module Documentation', 'Tab title'),
+            'url'       => Url::fromRequest()
+        ));
     }
 
     /**
@@ -81,11 +89,12 @@ class ModuleController extends DocController
     {
         $module = $this->params->getRequired('moduleName');
         $this->assertModuleInstalled($module);
-        $this->view->moduleName = $module;
+        $moduleManager = Icinga::app()->getModuleManager();
+        $name = $moduleManager->getModule($module, false)->getTitle();
         try {
             $this->renderToc(
                 $this->getPath($module, Icinga::app()->getModuleManager()->getModuleDir($module, '/doc')),
-                $module,
+                $name,
                 'doc/module/chapter',
                 array('moduleName' => $module)
             );
@@ -113,10 +122,65 @@ class ModuleController extends DocController
                 $this->getPath($module, Icinga::app()->getModuleManager()->getModuleDir($module, '/doc')),
                 $chapter,
                 'doc/module/chapter',
+                'doc/module/img',
                 array('moduleName' => $module)
             );
         } catch (DocException $e) {
             $this->httpNotFound($e->getMessage());
+        }
+    }
+
+    /**
+     * Deliver images
+     */
+    public function imageAction()
+    {
+        $module = $this->params->getRequired('moduleName');
+        $image = $this->params->getRequired('image');
+        $docPath = $this->getPath($module, Icinga::app()->getModuleManager()->getModuleDir($module, '/doc'));
+        $imagePath = realpath($docPath . '/' . $image);
+        if ($imagePath === false) {
+            $this->httpNotFound('%s does not exist', $image);
+        }
+
+        $this->_helper->viewRenderer->setNoRender(true);
+        $this->_helper->layout()->disableLayout();
+
+        $imageInfo = new SplFileInfo($imagePath);
+
+        $ETag = md5($imageInfo->getMTime() . $imagePath);
+        $lastModified = gmdate('D, d M Y H:i:s T', $imageInfo->getMTime());
+        $match = false;
+
+        if (isset($_SERER['HTTP_IF_NONE_MATCH'])) {
+            $ifNoneMatch = explode(', ', stripslashes($_SERVER['HTTP_IF_NONE_MATCH']));
+            foreach ($ifNoneMatch as $tag) {
+                if ($tag === $ETag) {
+                    $match = true;
+                    break;
+                }
+            }
+        } elseif (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+            $lastModifiedSince = stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+            if ($lastModifiedSince === $lastModified) {
+                $match = true;
+            }
+        }
+
+        header('ETag: "' . $ETag . '"');
+        header('Cache-Control: no-transform,public,max-age=3600');
+        header('Last-Modified: ' . $lastModified);
+        // Set additional headers for compatibility reasons (Cache-Control should have precedence) in case
+        // session.cache_limiter is set to no cache
+        header('Pragma: cache');
+        header('Expires: ' . gmdate('D, d M Y H:i:s T', time() + 3600));
+
+        if ($match) {
+            header('HTTP/1.1 304 Not Modified');
+        } else {
+            $finfo = new finfo();
+            header('Content-Type: ' . $finfo->file($imagePath, FILEINFO_MIME_TYPE));
+            readfile($imagePath);
         }
     }
 

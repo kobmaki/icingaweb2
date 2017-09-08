@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -7,6 +7,7 @@ use Exception;
 use Icinga\Application\Config;
 use Icinga\Exception\NotFoundError;
 use Icinga\Data\DataArray\ArrayDatasource;
+use Icinga\Data\Filter\FilterMatchCaseInsensitive;
 use Icinga\Forms\ConfirmRemovalForm;
 use Icinga\Forms\Navigation\NavigationConfigForm;
 use Icinga\Web\Controller;
@@ -78,7 +79,7 @@ class NavigationController extends Controller
             $config->getConfigObject()->setKeyColumn('name');
             $query = $config->select();
             if ($owner !== null) {
-                $query->where('owner', $owner);
+                $query->applyFilter(new FilterMatchCaseInsensitive('owner', '=', $owner));
             }
 
             foreach ($query as $itemConfig) {
@@ -127,11 +128,11 @@ class NavigationController extends Controller
 
         $this->getTabs()
         ->add(
-            'preferences',
+            'account',
             array(
-                'title' => $this->translate('Adjust the preferences of Icinga Web 2 according to your needs'),
-                'label' => $this->translate('Preferences'),
-                'url'   => 'preference'
+                'title' => $this->translate('Update your account'),
+                'label' => $this->translate('My Account'),
+                'url'   => 'account'
             )
         )
         ->add(
@@ -218,7 +219,7 @@ class NavigationController extends Controller
         $form->setDefaultUrl(rawurldecode($this->params->get('url', '')));
 
         $form->setOnSuccess(function (NavigationConfigForm $form) {
-            $data = array_filter($form->getValues());
+            $data = $form::transformEmptyValuesToNull($form->getValues());
 
             try {
                 $form->add($data);
@@ -265,12 +266,7 @@ class NavigationController extends Controller
         $form->setUserConfig(Config::navigation($itemType, $itemOwner));
         $form->setRedirectUrl($referrer === 'shared' ? 'navigation/shared' : 'navigation');
         $form->setOnSuccess(function (NavigationConfigForm $form) use ($itemName) {
-            $data = array_map(
-                function ($v) {
-                    return $v !== '' ? $v : null;
-                },
-                $form->getValues()
-            );
+            $data = $form::transformEmptyValuesToNull($form->getValues());
 
             try {
                 $form->edit($itemName, $data);

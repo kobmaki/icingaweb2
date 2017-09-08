@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms\Config\Resource;
 
@@ -36,28 +36,32 @@ class DbResourceForm extends Form
         if (Platform::hasMssqlSupport()) {
             $dbChoices['mssql'] = 'MSSQL';
         }
+        if (Platform::hasIbmSupport()){
+            $dbChoices['ibm'] = 'IBM (DB2)';
+        }
         if (Platform::hasOracleSupport()) {
             $dbChoices['oracle'] = 'Oracle';
         }
         if (Platform::hasOciSupport()) {
             $dbChoices['oci'] = 'Oracle (OCI8)';
         }
+
+        $offerSsl = false;
         $offerPostgres = false;
+        $offerIbm = false;
         $offerMysql = false;
-        if (isset($formData['db'])) {
-            if ($formData['db'] === 'pgsql') {
-                $offerPostgres = true;
-            } elseif ($formData['db'] === 'mysql') {
-                $offerMysql = true;
+        $dbChoice = isset($formData['db']) ? $formData['db'] : key($dbChoices);
+        if ($dbChoice === 'pgsql') {
+            $offerPostgres = true;
+        } elseif ($dbChoice === 'mysql') {
+            $offerMysql = true;
+            if (version_compare(Platform::getPhpVersion(), '5.4.0', '>=')) {
+                $offerSsl = true;
             }
-        } else {
-            $dbChoice = key($dbChoices);
-            if ($dbChoice === 'pgsql') {
-                $offerPostgres = true;
-            } elseif ($dbChoices === 'mysql') {
-                $offerMysql = true;
-            }
+        } elseif ($dbChoice === 'ibm') {
+          $offerIbm = true;
         }
+
         $socketInfo = '';
         if ($offerPostgres) {
             $socketInfo = $this->translate(
@@ -68,6 +72,7 @@ class DbResourceForm extends Form
                 'For using unix domain sockets, specify localhost'
             );
         }
+
         $this->addElement(
             'text',
             'name',
@@ -132,7 +137,6 @@ class DbResourceForm extends Form
             'password',
             'password',
             array(
-                'required'          => true,
                 'renderPassword'    => true,
                 'label'             => $this->translate('Password'),
                 'description'       => $this->translate('The password to use for authentication')
@@ -157,6 +161,63 @@ class DbResourceForm extends Form
                 'label'         => $this->translate('Persistent')
             )
         );
+        if ($offerSsl) {
+            $this->addElement(
+                'checkbox',
+                'use_ssl',
+                array(
+                    'autosubmit'    => true,
+                    'label'         => $this->translate('Use SSL'),
+                    'description'   => $this->translate(
+                        'Whether to encrypt the connection or to authenticate using certificates'
+                    )
+                )
+            );
+            if (isset($formData['use_ssl']) && $formData['use_ssl']) {
+                $this->addElement(
+                    'text',
+                    'ssl_key',
+                    array(
+                        'label'             => $this->translate('SSL Key'),
+                        'description'       => $this->translate('The client key file path')
+                    )
+                );
+                $this->addElement(
+                    'text',
+                    'ssl_cert',
+                    array(
+                        'label'             => $this->translate('SSL Certificate'),
+                        'description'       => $this->translate('The certificate file path')
+                    )
+                );
+                $this->addElement(
+                    'text',
+                    'ssl_ca',
+                    array(
+                        'label'             => $this->translate('SSL CA'),
+                        'description'       => $this->translate('The CA certificate file path')
+                    )
+                );
+                $this->addElement(
+                    'text',
+                    'ssl_capath',
+                    array(
+                        'label'             => $this->translate('SSL CA Path'),
+                        'description'       => $this->translate(
+                            'The trusted CA certificates in PEM format directory path'
+                        )
+                    )
+                );
+                $this->addElement(
+                    'text',
+                    'ssl_cipher',
+                    array(
+                        'label'             => $this->translate('SSL Cipher'),
+                        'description'       => $this->translate('The list of permissible ciphers')
+                    )
+                );
+            }
+        }
 
         return $this;
     }

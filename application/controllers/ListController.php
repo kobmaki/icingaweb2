@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -27,10 +27,7 @@ class ListController extends Controller
     {
         $this->getTabs()->add($action, array(
             'label' => ucfirst($action),
-            'url' => Url::fromPath(
-                    'list/'
-                    . str_replace(' ', '', $action)
-                )
+            'url'   => Url::fromPath('list/' . str_replace(' ', '', $action))
         ))->extend(new OutputFormat())->extend(new DashboardAction())->extend(new MenuAction())->activate($action);
     }
 
@@ -39,6 +36,8 @@ class ListController extends Controller
      */
     public function applicationlogAction()
     {
+        $this->assertPermission('application/log');
+
         if (! Logger::writesToFile()) {
             $this->httpNotFound('Page not found');
         }

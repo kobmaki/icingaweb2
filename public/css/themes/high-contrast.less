@@ -1,0 +1,125 @@
+/*! Icinga Web 2 | (c) 2016 Icinga Development Team | GPLv2+ */
+
+@icinga-blue: #006D8C;
+
+@color-ok: #006400;
+@color-critical: #EE0000;
+@color-critical-handled: #EE0000;
+@color-warning: #8B5A00;
+@color-warning-handled: #8B5A00;
+@color-unknown: #800080;
+@color-unknown-handled: #800080;
+@color-unreachable: #800080;
+@color-unreachable-handled: #800080;
+@color-pending: #0000EE;
+
+@text-color: #191919;
+@text-color-light: #555555;
+
+.badge {
+  background-color: @text-color-light;
+}
+
+.badge.handled {
+  background-color: @body-bg-color !important;
+  color: @text-color;
+
+  &.state-warning {
+    border: 1px solid @color-warning-handled;
+    margin-top: -1px;
+  }
+
+  &.state-critical {
+    border: 1px solid @color-critical-handled;
+    margin-top: -1px;
+  }
+
+  &.state-down {
+    border: 1px solid @color-critical-handled;
+    margin-top: -1px;
+  }
+
+  &.state-unreachable {
+    border: 1px solid @color-unreachable-handled;
+    margin-top: -1px;
+  }
+
+  &.state-unknown {
+    border: 1px solid @color-unknown-handled;
+    margin-top: -1px;
+  }
+}
+
+#menu a:hover {
+  color: @body-bg-color;
+  background-color: @icinga-blue;
+}
+
+#menu .active > a {
+  text-decoration: underline;
+}
+
+.boxview a:focus {
+    color: @text-color;
+    text-decoration: underline;
+}
+
+.icinga-module.module-monitoring {
+  @timeline-notification-color: #1650CF;
+  @timeline-hard-state-color: #A24600;
+  @timeline-comment-color: #346964;
+  @timeline-ack-color: #855D18;
+  @timeline-downtime-start-color: #515151;
+  @timeline-downtime-end-color: #5e5e2f;
+
+  // Unfortunately it does not suffice to only override the timeline colors here, because our less compiler seems to
+  // have the related style block in module.less already evaluated
+
+  .timeline-notification {
+    background-color: @timeline-notification-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-notification-color, 20%);
+    }
+  }
+
+  .timeline-hard-state {
+    background-color: @timeline-hard-state-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-hard-state-color, 20%);
+    }
+  }
+
+  .timeline-comment {
+    background-color: @timeline-comment-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-comment-color, 20%);
+    }
+  }
+
+  .timeline-ack {
+    background-color: @timeline-ack-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-ack-color, 20%);
+    }
+  }
+
+  .timeline-downtime-start {
+    background-color: @timeline-downtime-start-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-downtime-start-color, 20%);
+    }
+  }
+
+  .timeline-downtime-end {
+    background-color: @timeline-downtime-end-color;
+
+    &.extrapolated {
+      background-color: lighten(@timeline-downtime-end-color, 20%);
+    }
+  }
+}

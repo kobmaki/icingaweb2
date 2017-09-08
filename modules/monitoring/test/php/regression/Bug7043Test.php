@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Module\Monitoring\Regression;
 
@@ -12,7 +12,6 @@ use Icinga\Data\ConfigObject;
 use Icinga\Module\Monitoring\Backend;
 use Icinga\Test\BaseTestCase;
 use Mockery;
-
 
 class ConfigWithSetModuleConfig extends Config
 {

@@ -4,11 +4,11 @@ use Icinga\Module\Monitoring\Object\Service;
 
 if (! $this->compact): ?>
 <div class="controls">
-    <?= $tabs ?>
-    <div class="grid">
-        <?= $this->sortBox ?>
+    <?= $this->tabs ?>
+    <?= $this->paginator ?>
+    <div class="sort-controls-container">
         <?= $this->limiter ?>
-        <?= $this->paginator ?>
+        <?= $this->sortBox ?>
     </div>
     <?= $this->filterEditor ?>
 </div>
@@ -35,7 +35,7 @@ if (! $this->compact): ?>
             <td class="state-col state-<?= $stateName ?>">
                 <div class="state-label"><?= $stateLabel ?></div>
                 <div class="state-meta">
-                    <?= $this->timeAgo($notification->notification_start_time, $this->compact) ?>
+                    <?= $this->timeAgo($notification->notification_timestamp, $this->compact) ?>
                 </div>
             </td>
             <td>
@@ -65,21 +65,19 @@ if (! $this->compact): ?>
                             )
                         ) ?>
                     <?php else: ?>
-                        <?= $this->translate('Sent out to any contact') ?>
+                        <?= $this->translate('Not sent out to any contact') ?>
                     <?php endif ?>
                     </div>
                 <?php endif ?>
                 </div>
-                <p class="overview-plugin-output">
-                    <?= $this->pluginOutput($this->ellipsis($notification->notification_output, 10000), true) ?>
-                </p>
+                <p class="overview-plugin-output"><?= $this->pluginOutput($this->ellipsis($notification->notification_output, 10000), true) ?></p>
             </td>
         </tr>
     <?php endforeach ?>
     </tbody>
     </table>
 <?php if ($notifications->hasMore()): ?>
-    <div class="text-right">
+    <div class="action-links">
         <?= $this->qlink(
             $this->translate('Show More'),
             $this->url(isset($notificationsUrl) ? $notificationsUrl : null)->without(array('view', 'limit')),

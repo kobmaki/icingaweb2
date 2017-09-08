@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Config;
 
@@ -147,12 +147,6 @@ class BackendConfigForm extends ConfigForm
         }
 
         $backendConfig->merge($data);
-        foreach ($backendConfig->toArray() as $k => $v) {
-            if ($v === null) {
-                unset($backendConfig->$k);
-            }
-        }
-
         $this->config->setSection($name, $backendConfig);
         return $this;
     }

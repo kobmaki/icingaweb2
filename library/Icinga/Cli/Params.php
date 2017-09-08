@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Cli;
 
@@ -49,7 +49,9 @@ class Params
                 $key = substr($argv[$i], 2);
                 $matches = array();
                 if (1 === preg_match(
-                    '/(?<!.)([^=]+)=(.*)(?!.)/ms', $key, $matches
+                    '/(?<!.)([^=]+)=(.*)(?!.)/ms',
+                    $key,
+                    $matches
                 )) {
                     $this->params[$matches[1]] = $matches[2];
                 } elseif (! isset($argv[$i + 1]) || substr($argv[$i + 1], 0, 2) === '--') {

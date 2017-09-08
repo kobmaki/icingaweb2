@@ -1,9 +1,7 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Backend\Ido\Query;
-
-use Zend_Db_Expr;
 
 class HoststatusQuery extends IdoQuery
 {
@@ -80,6 +78,7 @@ class HoststatusQuery extends IdoQuery
             'host_last_hard_state_change'           => 'UNIX_TIMESTAMP(hs.last_hard_state_change)',
             'host_last_notification'                => 'UNIX_TIMESTAMP(hs.last_notification)',
             'host_last_state_change'                => 'UNIX_TIMESTAMP(hs.last_state_change)',
+            'host_last_state_change_ts'             => 'hs.last_state_change',
             'host_last_time_down'                   => 'UNIX_TIMESTAMP(hs.last_time_down)',
             'host_last_time_unreachable'            => 'UNIX_TIMESTAMP(hs.last_time_unreachable)',
             'host_last_time_up'                     => 'UNIX_TIMESTAMP(hs.last_time_up)',
@@ -135,8 +134,8 @@ class HoststatusQuery extends IdoQuery
                 END
             ELSE
                 CASE WHEN hs.has_been_checked = 0 OR hs.has_been_checked IS NULL THEN 16
-                     WHEN hs.current_state = 1 THEN 32
-                     WHEN hs.current_state = 2 THEN 64
+                     WHEN hs.current_state = 1 THEN 64
+                     WHEN hs.current_state = 2 THEN 32
                      ELSE 256
                 END
                 +
@@ -148,11 +147,6 @@ class HoststatusQuery extends IdoQuery
                             ELSE 4
                         END
                 END
-            END
-            +
-            CASE WHEN hs.state_type = 1
-                THEN 8
-                ELSE 0
             END',
             'host_state'                => 'CASE WHEN hs.has_been_checked = 0 OR hs.has_been_checked IS NULL THEN 99 ELSE hs.current_state END',
             'host_state_type'           => 'hs.state_type',
@@ -182,17 +176,16 @@ class HoststatusQuery extends IdoQuery
         if (version_compare($this->getIdoVersion(), '1.10.0', '<')) {
             $this->columnMap['hoststatus']['host_check_source'] = '(NULL)';
         }
-
         if (version_compare($this->getIdoVersion(), '1.13.0', '<')) {
             $this->columnMap['hoststatus']['host_is_reachable'] = '(NULL)';
         }
 
         $this->select->from(
-            array('h' => $this->prefix . 'hosts'),
+            array('ho' => $this->prefix . 'objects'),
             array()
         )->join(
-            array('ho' => $this->prefix . 'objects'),
-            'ho.object_id = h.host_object_id AND ho.is_active = 1 AND ho.objecttype_id = 1',
+            array('h' => $this->prefix . 'hosts'),
+            'h.host_object_id = ho.object_id AND ho.is_active = 1 AND ho.objecttype_id = 1',
             array()
         );
         $this->joinedVirtualTables['hosts'] = true;
@@ -304,7 +297,6 @@ class HoststatusQuery extends IdoQuery
             ->columns(array(
                 'host_name',
                 'unhandled_service_count'
-            )
-        );
+            ));
     }
 }

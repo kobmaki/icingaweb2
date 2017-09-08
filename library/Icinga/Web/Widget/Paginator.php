@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Widget;
 
@@ -124,7 +124,7 @@ class Paginator extends AbstractWidget
                 $range[$i] = $i;
             }
 
-            if ($currentPage < 6 ) {
+            if ($currentPage < 6) {
                 // We are on page 1-5 from
                 for ($i = 1; $i <= 7; $i++) {
                     $range[$i] = $i;
@@ -156,7 +156,6 @@ class Paginator extends AbstractWidget
             foreach (array($pageCount - 1, $pageCount) as $i) {
                 $range[$i] = $i;
             }
-
         }
 
         if (empty($range)) {

@@ -1,8 +1,9 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Command\Transport;
 
+use Exception;
 use Icinga\Application\Config;
 use Icinga\Application\Logger;
 use Icinga\Data\ConfigObject;
@@ -65,6 +66,9 @@ class CommandTransport implements CommandTransportInterface
             case RemoteCommandFile::TRANSPORT:
                 $transport = new RemoteCommandFile();
                 break;
+            case ApiCommandTransport::TRANSPORT:
+                $transport = new ApiCommandTransport();
+                break;
             case LocalCommandFile::TRANSPORT:
             case '':  // Casting null to string is the empty string
                 $transport = new LocalCommandFile();
@@ -74,12 +78,13 @@ class CommandTransport implements CommandTransportInterface
                     mt(
                         'monitoring',
                         'Cannot create command transport "%s". Invalid transport'
-                        . ' defined in "%s". Use one of "%s" or "%s".'
+                        . ' defined in "%s". Use one of "%s", "%s" or "%s".'
                     ),
                     $config->transport,
                     static::getConfig()->getConfigFile(),
                     LocalCommandFile::TRANSPORT,
-                    RemoteCommandFile::TRANSPORT
+                    RemoteCommandFile::TRANSPORT,
+                    ApiCommandTransport::TRANSPORT
                 );
         }
 
@@ -111,16 +116,16 @@ class CommandTransport implements CommandTransportInterface
      */
     public function send(IcingaCommand $command, $now = null)
     {
-        $tries = 0;
-        foreach (static::getConfig() as $transportConfig) {
-            $transport = static::createTransport($transportConfig);
+        $errors = array();
 
+        foreach (static::getConfig() as $name => $transportConfig) {
+            $transport = static::createTransport($transportConfig);
             if ($this->transferPossible($command, $transport)) {
                 try {
                     $transport->send($command, $now);
-                } catch (CommandTransportException $e) {
+                } catch (Exception $e) {
                     Logger::error($e);
-                    $tries += 1;
+                    $errors[] = sprintf('%s: %s.', $name, rtrim($e->getMessage(), '.'));
                     continue; // Try the next transport
                 }
 
@@ -128,14 +133,8 @@ class CommandTransport implements CommandTransportInterface
             }
         }
 
-        if ($tries > 0) {
-            throw new CommandTransportException(
-                mt(
-                    'monitoring',
-                    'Failed to send external Icinga command. None of the configured transports'
-                    . ' was able to transfer the command. Please see the log for more details.'
-                )
-            );
+        if (! empty($errors)) {
+            throw new CommandTransportException(implode("\n", $errors));
         }
 
         throw new CommandTransportException(

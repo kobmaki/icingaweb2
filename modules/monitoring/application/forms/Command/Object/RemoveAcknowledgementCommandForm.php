@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Command\Object;
 
@@ -12,8 +12,40 @@ use Icinga\Web\Notification;
 class RemoveAcknowledgementCommandForm extends ObjectsCommandForm
 {
     /**
-     * (non-PHPDoc)
-     * @see \Zend_Form::init() For the method documentation.
+     * Whether to show the submit label next to the remove icon
+     *
+     * The submit label is disabled in detail views but should be enabled in multi-select views.
+     *
+     * @var bool
+     */
+    protected $labelEnabled = false;
+
+    /**
+     * Whether to show the submit label next to the remove icon
+     *
+     * @return bool
+     */
+    public function isLabelEnabled()
+    {
+        return $this->labelEnabled;
+    }
+
+    /**
+     * Set whether to show the submit label next to the remove icon
+     *
+     * @param   bool    $labelEnabled
+     *
+     * @return  $this
+     */
+    public function setLabelEnabled($labelEnabled)
+    {
+        $this->labelEnabled = (bool) $labelEnabled;
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function init()
     {
@@ -36,21 +68,38 @@ class RemoveAcknowledgementCommandForm extends ObjectsCommandForm
                 ),
                 'escape'        => false,
                 'ignore'        => true,
-                'label'         => $this->getView()->icon('cancel'),
+                'label'         => $this->getSubmitLabel(),
                 'title'         => $this->translatePlural(
-                    'Remove problem acknowledgement',
-                    'Remove problem acknowledgements',
+                    'Remove acknowledgement',
+                    'Remove acknowledgements',
                     count($this->objects)
                 ),
                 'type'          => 'submit'
             )
         );
+
         return $this;
     }
 
     /**
-     * (non-PHPDoc)
-     * @see \Icinga\Web\Form::onSuccess() For the method documentation.
+     * {@inheritdoc}
+     */
+    public function getSubmitLabel()
+    {
+        $label = $this->getView()->icon('cancel');
+        if ($this->isLabelEnabled()) {
+            $label .= $this->translatePlural(
+                'Remove acknowledgement',
+                'Remove acknowledgements',
+                count($this->objects)
+            );
+        }
+
+        return $label;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function onSuccess()
     {
@@ -62,10 +111,11 @@ class RemoveAcknowledgementCommandForm extends ObjectsCommandForm
         }
         Notification::success(mtp(
             'monitoring',
-            'Removing problem acknowledgement..',
-            'Removing problem acknowledgements..',
+            'Removing acknowledgement..',
+            'Removing acknowledgements..',
             count($this->objects)
         ));
+
         return true;
     }
 }

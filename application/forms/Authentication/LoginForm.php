@@ -1,8 +1,9 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms\Authentication;
 
+use Icinga\Application\Config;
 use Icinga\Authentication\Auth;
 use Icinga\Authentication\User\ExternalBackend;
 use Icinga\User;
@@ -39,9 +40,10 @@ class LoginForm extends Form
             'text',
             'username',
             array(
-                'required'      => true,
-                'label'         => $this->translate('Username'),
-                'class'         => false === isset($formData['username']) ? 'autofocus' : ''
+                'autocapitalize'    => 'off',
+                'class'             => false === isset($formData['username']) ? 'autofocus' : '',
+                'label'             => $this->translate('Username'),
+                'required'          => true
             )
         );
         $this->addElement(
@@ -86,6 +88,9 @@ class LoginForm extends Form
         $authChain = $auth->getAuthChain();
         $authChain->setSkipExternalBackends(true);
         $user = new User($this->getElement('username')->getValue());
+        if (! $user->hasDomain()) {
+            $user->setDomain(Config::app()->get('authentication', 'default_domain'));
+        }
         $password = $this->getElement('password')->getValue();
         $authenticated = $authChain->authenticate($user, $password);
         if ($authenticated) {

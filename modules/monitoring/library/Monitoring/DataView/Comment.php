@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\DataView;
 
@@ -19,6 +19,7 @@ class Comment extends DataView
             'comment_expiration',
             'comment_internal_id',
             'comment_is_persistent',
+            'comment_name',
             'comment_timestamp',
             'comment_type',
             'host_display_name',

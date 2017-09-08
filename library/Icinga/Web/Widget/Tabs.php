@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Widget;
 
@@ -21,7 +21,7 @@ class Tabs extends AbstractWidget implements Countable
      * @var string
      */
     private $baseTpl = <<< 'EOT'
-<ul class="tabs primary-nav">
+<ul class="tabs primary-nav nav">
   {TABS}
   {DROPDOWN}
   {REFRESH}
@@ -35,9 +35,9 @@ EOT;
      * @var string
      */
     private $dropdownTpl = <<< 'EOT'
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle"><i aria-hidden="true" class="icon-down-open"></i></a>
-  <ul class="dropdown-menu">
+<li class="dropdown-nav-item">
+  <a href="#" class="dropdown-toggle" title="{TITLE}" aria-label="{TITLE}"><i aria-hidden="true" class="icon-down-open"></i></a>
+  <ul class="nav">
     {TABS}
   </ul>
 </li>
@@ -49,8 +49,10 @@ EOT;
      * @var string
      */
     private $closeTpl = <<< 'EOT'
-<li class="dropdown" style="float: right;">
-  <a href="#" class="dropdown-toggle close-toggle"> <i aria-hidden="true" class="icon-cancel"></i> </a>
+<li style="float: right;">
+  <a href="#" title="{TITLE}" aria-label="{TITLE}" class="close-container-control">
+    <i aria-hidden="true" class="icon-cancel"></i>
+  </a>
 </li>
 EOT;
 
@@ -61,7 +63,7 @@ EOT;
      */
     private $refreshTpl = <<< 'EOT'
 <li>
-  <a class="spinner" href="{URL}" title="{TITLE}" aria-label="{LABEL}">
+  <a class="refresh-container-control spinner" href="{URL}" title="{TITLE}" aria-label="{LABEL}">
     <i aria-hidden="true" class="icon-cw"></i>
   </a>
 </li>
@@ -247,7 +249,7 @@ EOT;
         if ($this->has($name)) {
             unset($this->tabs[$name]);
             if (($dropdownIndex = array_search($name, $this->dropdownTabs, true)) !== false) {
-                array_splice($this->dropdownTabs, $dropdownIndex, 2);
+                array_splice($this->dropdownTabs, $dropdownIndex, 1);
             }
         }
 
@@ -285,7 +287,7 @@ EOT;
             }
             $tabs .= $tab;
         }
-        return str_replace('{TABS}', $tabs, $this->dropdownTpl);
+        return str_replace(array('{TABS}', '{TITLE}'), array($tabs, t('Dropdown menu')), $this->dropdownTpl);
     }
 
     /**
@@ -308,12 +310,12 @@ EOT;
 
     private function renderCloseTab()
     {
-        return $this->closeTpl;
+        return str_replace('{TITLE}', t('Close container'), $this->closeTpl);
     }
 
     private function renderRefreshTab()
     {
-        $url = Icinga::app()->getRequest()->getUrl();
+        $url = Url::fromRequest();
         $tab = $this->get($this->getActiveName());
 
         if ($tab !== null) {
@@ -375,8 +377,8 @@ EOT;
             array(
                 $tabs,
                 $drop,
-                $close,
-                $refresh
+                $refresh,
+                $close
             ),
             $this->baseTpl
         );

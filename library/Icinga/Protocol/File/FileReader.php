@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Protocol\File;
 
@@ -132,7 +132,7 @@ class FileReader implements Selectable, Countable
             $count = $this->count($query);
             if ($count <= $skip) {
                 return $lines;
-            } else if ($count < ($skip + $read)) {
+            } elseif ($count < ($skip + $read)) {
                 $read = $count - $skip;
                 $skip = 0;
             } else {

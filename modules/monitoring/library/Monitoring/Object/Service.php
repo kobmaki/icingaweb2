@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Object;
 
@@ -118,6 +118,7 @@ class Service extends MonitoredObject
             'host_display_name',
             'host_handled',
             'host_in_downtime',
+            'host_is_flapping',
             'host_last_state_change',
             'host_name',
             'host_notifications_enabled',
@@ -212,10 +213,5 @@ class Service extends MonitoredObject
         return $this->resolveAllStrings(
             MonitoredObject::parseAttributeUrls($this->service_notes_url)
         );
-    }
-
-    public function getNotes()
-    {
-        return $this->service_notes;
     }
 }

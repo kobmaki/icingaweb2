@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\View;
 
@@ -13,4 +13,3 @@ $this->addHelperFunction('auth', function () {
 $this->addHelperFunction('widget', function ($name, $options = null) {
     return Widget::create($name, $options);
 });
-

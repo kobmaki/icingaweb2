@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Regression;
 
@@ -10,7 +10,7 @@ use Icinga\Test\BaseTestCase;
  *
  * Bogus regression test
  *
- * @see https://dev.icinga.org/issues/4102
+ * @see https://dev.icinga.com/issues/4102
  */
 class Bug4102Test extends BaseTestCase
 {

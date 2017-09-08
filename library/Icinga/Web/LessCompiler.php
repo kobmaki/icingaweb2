@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web;
 
@@ -70,7 +70,7 @@ class LessCompiler
      */
     public function addLessFile($lessFile)
     {
-        $this->lessFiles[] = $lessFile;
+        $this->lessFiles[] = realpath($lessFile);
         return $this;
     }
 
@@ -87,7 +87,7 @@ class LessCompiler
         if (! isset($this->moduleLessFiles[$moduleName])) {
             $this->moduleLessFiles[$moduleName] = array();
         }
-        $this->moduleLessFiles[$moduleName][] = $lessFile;
+        $this->moduleLessFiles[$moduleName][] = realpath($lessFile);
         return $this;
     }
 
@@ -98,9 +98,12 @@ class LessCompiler
      */
     public function getLessFiles()
     {
-        $lessFiles = iterator_to_array(new RecursiveIteratorIterator(new RecursiveArrayIterator(
-                $this->lessFiles + $this->moduleLessFiles
-        )));
+        $lessFiles = $this->lessFiles;
+
+        foreach ($this->moduleLessFiles as $moduleLessFiles) {
+            $lessFiles = array_merge($lessFiles, $moduleLessFiles);
+        }
+
         if ($this->theme !== null) {
             $lessFiles[] = $this->theme;
         }
@@ -155,18 +158,16 @@ class LessCompiler
             $moduleCss .= '}';
         }
 
-        $moduleCss = preg_replace(
-            '/(\.icinga-module\.module-[^\s]+) (#layout\.[^\s]+)/m',
-            '\2 \1',
-            $moduleCss
-        );
-
         $this->source .= $moduleCss;
 
         if ($this->theme !== null) {
             $this->source .= file_get_contents($this->theme);
         }
 
-        return $this->lessc->compile($this->source);
+        return preg_replace(
+            '/(\.icinga-module\.module-[^\s]+) (#layout\.[^\s]+)/m',
+            '\2 \1',
+            $this->lessc->compile($this->source)
+        );
     }
 }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms\Navigation;
 
@@ -14,7 +14,7 @@ use Icinga\Exception\NotFoundError;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Forms\ConfigForm;
 use Icinga\User;
-use Icinga\Util\String;
+use Icinga\Util\StringHelper;
 use Icinga\Web\Form;
 
 /**
@@ -213,8 +213,7 @@ class NavigationConfigForm extends ConfigForm
 
         $names = array();
         foreach ($this->getShareConfig($type) as $sectionName => $sectionConfig) {
-            if (
-                $sectionName !== $this->itemToLoad
+            if ($sectionName !== $this->itemToLoad
                 && $sectionConfig->owner === ($owner ?: $this->getUser()->getUsername())
                 && !in_array($sectionName, $children, true)
             ) {
@@ -223,8 +222,7 @@ class NavigationConfigForm extends ConfigForm
         }
 
         foreach ($this->getUserConfig($type) as $sectionName => $sectionConfig) {
-            if (
-                $sectionName !== $this->itemToLoad
+            if ($sectionName !== $this->itemToLoad
                 && !in_array($sectionName, $children, true)
             ) {
                 $names[] = $sectionName;
@@ -426,11 +424,6 @@ class NavigationConfigForm extends ConfigForm
         }
 
         $itemConfig->merge($data);
-        foreach ($itemConfig->toArray() as $k => $v) {
-            if ($v === null) {
-                unset($itemConfig->$k);
-            }
-        }
 
         if ($shared) {
             // Share all descendant children
@@ -567,7 +560,7 @@ class NavigationConfigForm extends ConfigForm
         $itemType = isset($formData['type']) ? $formData['type'] : key($itemTypes);
         if ($itemType === null) {
             throw new ProgrammingError(
-                'This should actually not happen. Create a bug report at dev.icinga.org'
+                'This should actually not happen. Create a bug report at https://github.com/icinga/icingaweb2'
                 . ' or remove this assertion if you know what you\'re doing'
             );
         }
@@ -586,8 +579,7 @@ class NavigationConfigForm extends ConfigForm
             )
         );
 
-        if (
-            (! $itemForm->requiresParentSelection() || !isset($formData['parent']) || !$formData['parent'])
+        if ((! $itemForm->requiresParentSelection() || !isset($formData['parent']) || !$formData['parent'])
             && $this->getUser()->can('application/share/navigation')
         ) {
             $checked = isset($formData['shared']) ? null : (isset($formData['users']) || isset($formData['groups']));
@@ -607,7 +599,7 @@ class NavigationConfigForm extends ConfigForm
             if ($checked || (isset($formData['shared']) && $formData['shared'])) {
                 $shared = true;
                 $this->addElement(
-                    'text',
+                    'textarea',
                     'users',
                     array(
                         'label'         => $this->translate('Users'),
@@ -617,7 +609,7 @@ class NavigationConfigForm extends ConfigForm
                     )
                 );
                 $this->addElement(
-                    'text',
+                    'textarea',
                     'groups',
                     array(
                         'label'         => $this->translate('Groups'),
@@ -786,8 +778,7 @@ class NavigationConfigForm extends ConfigForm
         if ($this->getUserConfig()->hasSection($name)) {
             return $this->getUserConfig();
         } elseif ($this->getShareConfig()->hasSection($name)) {
-            if (
-                $this->getShareConfig()->get($name, 'owner') === $this->getUser()->getUsername()
+            if ($this->getShareConfig()->get($name, 'owner') === $this->getUser()->getUsername()
                 || $this->getUser()->can('config/application/navigation')
             ) {
                 return $this->getShareConfig();
@@ -817,7 +808,7 @@ class NavigationConfigForm extends ConfigForm
      */
     protected function getItemForm($type)
     {
-        $className = String::cname($type, '-') . 'Form';
+        $className = StringHelper::cname($type, '-') . 'Form';
 
         $form = null;
         foreach (Icinga::app()->getModuleManager()->getLoadedModules() as $module) {

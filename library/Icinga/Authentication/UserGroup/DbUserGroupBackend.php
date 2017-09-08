@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Authentication\UserGroup;
 
@@ -120,7 +120,7 @@ class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterfa
             t('User Group')     => 'group_name',
             t('Parent')         => 'parent',
             t('Created At')     => 'created_at',
-            t('Last Modified')  => 'last_modified'
+            t('Last modified')  => 'last_modified'
         );
     }
 
@@ -254,7 +254,7 @@ class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterfa
             $this->requireTable('group_membership'),
             'g.id = gm.group_id',
             array()
-        );
+        )->group('g.id');
     }
 
     /**

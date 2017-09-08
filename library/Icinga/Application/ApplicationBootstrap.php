@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Application;
 
@@ -344,7 +344,7 @@ abstract class ApplicationBootstrap
      */
     public function setupAutoloader()
     {
-        require $this->libDir . '/Icinga/Application/ClassLoader.php';
+        require_once $this->libDir . '/Icinga/Application/ClassLoader.php';
 
         $this->loader = new ClassLoader();
         $this->loader->registerNamespace('Icinga', $this->libDir . '/Icinga');
@@ -483,10 +483,11 @@ abstract class ApplicationBootstrap
                 // Error was suppressed with the @-operator
                 return false; // Continue with the normal error handler
             }
-            switch($errno) {
+            switch ($errno) {
                 case E_NOTICE:
                 case E_WARNING:
                 case E_STRICT:
+                case E_RECOVERABLE_ERROR:
                     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
             }
             return false; // Continue with the normal error handler
@@ -515,25 +516,6 @@ abstract class ApplicationBootstrap
                     Logger::getInstance()->registerConfigError($e->getMessage());
                 }
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * Set up the resource factory
-     *
-     * @return $this
-     */
-    protected function setupResourceFactory()
-    {
-        try {
-            $config = Config::app('resources');
-            ResourceFactory::setConfig($config);
-        } catch (NotReadableError $e) {
-            Logger::error(
-                new IcingaException('Cannot load resource configuration. An exception was thrown:', $e)
-            );
         }
 
         return $this;
@@ -572,7 +554,7 @@ abstract class ApplicationBootstrap
      *
      * @return $this
      */
-    protected final function setupTimezone()
+    final protected function setupTimezone()
     {
         $timezone = $this->detectTimeZone();
         if ($timezone === null || @date_default_timezone_set($timezone) === false) {
@@ -600,7 +582,7 @@ abstract class ApplicationBootstrap
      *
      * @return $this
      */
-    protected final function setupInternationalization()
+    final protected function setupInternationalization()
     {
         if ($this->hasLocales()) {
             Translator::registerDomain(Translator::DEFAULT_DOMAIN, $this->getLocaleDir());

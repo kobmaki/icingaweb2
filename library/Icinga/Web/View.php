@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web;
 
@@ -116,6 +116,33 @@ class View extends Zend_View_Abstract
         }
 
         $this->helperFunctions[$name] = $function;
+        return $this;
+    }
+
+    /**
+     * Set or overwrite a helper function
+     *
+     * @param   string  $name
+     * @param   Closure $function
+     *
+     * @return  $this
+     */
+    public function setHelperFunction($name, Closure $function)
+    {
+        $this->helperFunctions[$name] = $function;
+        return $this;
+    }
+
+    /**
+     * Drop a helper function
+     *
+     * @param   string  $name
+     *
+     * @return  $this
+     */
+    public function dropHelperFunction($name)
+    {
+        unset($this->helperFunctions[$name]);
         return $this;
     }
 

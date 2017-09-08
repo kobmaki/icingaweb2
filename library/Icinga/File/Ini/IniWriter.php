@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\File\Ini;
 
@@ -149,6 +149,10 @@ class IniWriter
                 $domSection = $doc->getSection($section);
             }
             foreach ($directives as $key => $value) {
+                if ($value === null) {
+                    continue;
+                }
+
                 if ($value instanceof ConfigObject) {
                     throw new ProgrammingError('Cannot diff recursive configs');
                 }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -14,7 +14,7 @@ use Icinga\Web\Notification;
 /**
  * Manage user permissions and restrictions based on roles
  *
- * @TODO(el): Rename to RolesController: https://dev.icinga.org/issues/10015
+ * @TODO(el): Rename to RolesController: https://dev.icinga.com/issues/10015
  */
 class RoleController extends AuthBackendController
 {

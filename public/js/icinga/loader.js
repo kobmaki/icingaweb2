@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /**
  * Icinga.Loader
@@ -114,13 +114,13 @@
                 contentType = false;
             }
 
-            var self = this;
+            var _this = this;
             var req = $.ajax({
                 type   : method,
                 url    : url,
                 data   : data,
                 headers: headers,
-                context: self,
+                context: _this,
                 contentType: contentType,
                 processData: ! isFormData
             });
@@ -153,9 +153,9 @@
          * @param {object} $target  The target container
          */
         submitFormToIframe: function ($form, action, $target) {
-            var self = this;
+            var _this = this;
 
-            $form.prop('action', self.icinga.utils.addUrlParams(action, {
+            $form.prop('action', _this.icinga.utils.addUrlParams(action, {
                 '_frameUpload': true
             }));
             $form.prop('target', 'fileupload-frame-target');
@@ -165,10 +165,10 @@
 
                 var $redirectMeta = $contents.find('meta[name="redirectUrl"]');
                 if ($redirectMeta.length) {
-                    self.redirectToUrl($redirectMeta.attr('content'), $target);
+                    _this.redirectToUrl($redirectMeta.attr('content'), $target);
                 } else {
                     // Fetch the frame's new content and paste it into the target
-                    self.renderContentToContainer(
+                    _this.renderContentToContainer(
                         $contents.find('body').html(),
                         $target,
                         'replace'
@@ -208,16 +208,16 @@
         },
 
         autorefresh: function () {
-            var self = this;
-            if (self.autorefreshEnabled !== true) {
+            var _this = this;
+            if (_this.autorefreshEnabled !== true) {
                 return;
             }
 
             $('.container').filter(this.filterAutorefreshingContainers).each(function (idx, el) {
                 var $el = $(el);
                 var id = $el.attr('id');
-                if (typeof self.requests[id] !== 'undefined') {
-                    self.icinga.logger.debug('No refresh, request pending for ', id);
+                if (typeof _this.requests[id] !== 'undefined') {
+                    _this.icinga.logger.debug('No refresh, request pending for ', id);
                     return;
                 }
 
@@ -225,12 +225,12 @@
                 var lastUpdate = $el.data('lastUpdate');
 
                 if (typeof interval === 'undefined' || ! interval) {
-                    self.icinga.logger.info('No interval, setting default', id);
+                    _this.icinga.logger.info('No interval, setting default', id);
                     interval = 10;
                 }
 
                 if (typeof lastUpdate === 'undefined' || ! lastUpdate) {
-                    self.icinga.logger.info('No lastUpdate, setting one', id);
+                    _this.icinga.logger.info('No lastUpdate, setting one', id);
                     $el.data('lastUpdate',(new Date()).getTime());
                     return;
                 }
@@ -248,12 +248,12 @@
                     return;
                 }
 
-                if (self.loadUrl($el.data('icingaUrl'), $el, undefined, undefined, undefined, true) === false) {
-                    self.icinga.logger.debug(
+                if (_this.loadUrl($el.data('icingaUrl'), $el, undefined, undefined, undefined, true) === false) {
+                    _this.icinga.logger.debug(
                         'NOT autorefreshing ' + id + ', even if ' + interval + ' ms passed. Request pending?'
                     );
                 } else {
-                    self.icinga.logger.debug(
+                    _this.icinga.logger.debug(
                         'Autorefreshing ' + id + ' ' + interval + ' ms passed'
                     );
                 }
@@ -277,12 +277,12 @@
 
         processNotificationHeader: function(req) {
             var header = req.getResponseHeader('X-Icinga-Notification');
-            var self = this;
+            var _this = this;
             if (! header) return false;
             var list = header.split('&');
             $.each(list, function(idx, el) {
                 var parts = decodeURIComponent(el).split(' ');
-                self.createNotice(parts.shift(), parts.join(' '));
+                _this.createNotice(parts.shift(), parts.join(' '));
             });
             return true;
         },
@@ -331,7 +331,10 @@
                 }
             }
 
-            this.redirectToUrl(redirect, req.$target, req.url, req.getResponseHeader('X-Icinga-Rerender-Layout'));
+            this.redirectToUrl(
+                redirect, req.$target, req.url, req.getResponseHeader('X-Icinga-Rerender-Layout'), req.forceFocus,
+                req.getResponseHeader('X-Icinga-Refresh')
+            );
             return true;
         },
 
@@ -340,10 +343,10 @@
          *
          * @param {string}  url
          * @param {object}  $target
-         * @param {string]  origin
+         * @param {string}  origin
          * @param {boolean} rerenderLayout
          */
-        redirectToUrl: function (url, $target, origin, rerenderLayout) {
+        redirectToUrl: function (url, $target, origin, rerenderLayout, forceFocus, autoRefreshInterval) {
             var icinga = this.icinga;
 
             if (typeof rerenderLayout === 'undefined') {
@@ -392,7 +395,9 @@
                         }
                     }
 
-                    this.loadUrl(url, $target);
+                    var req = this.loadUrl(url, $target);
+                    req.forceFocus = url === origin ? forceFocus : null;
+                    req.autoRefreshInterval = autoRefreshInterval;
                 }
             }
         },
@@ -401,15 +406,15 @@
             // TODO: this is just a prototype, disabled for now
             return;
 
-            var self = this;
+            var _this = this;
             $('img.icon', $container).each(function(idx, img) {
                 var src = $(img).attr('src');
-                if (typeof self.iconCache[src] !== 'undefined') {
+                if (typeof _this.iconCache[src] !== 'undefined') {
                     return;
                 }
                 var cache = new Image();
                 cache.src = src
-                self.iconCache[src] = cache;
+                _this.iconCache[src] = cache;
             });
         },
 
@@ -417,7 +422,7 @@
          * Handle successful XHR response
          */
         onResponse: function (data, textStatus, req) {
-            var self = this;
+            var _this = this;
             if (this.failureNotice !== null) {
                 if (! this.failureNotice.hasClass('fading-out')) {
                     this.failureNotice.remove();
@@ -438,6 +443,10 @@
 
             if (req.getResponseHeader('X-Icinga-Redirect')) {
                 return;
+            }
+
+            if (req.getResponseHeader('X-Icinga-Announcements') === 'refresh') {
+                _this.loadUrl(_this.url('/layout/announcements'), $('#announcements'));
             }
 
             // div helps getting an XML tree
@@ -471,38 +480,40 @@
                 newBody = true;
             }
 
-            var moduleName = req.getResponseHeader('X-Icinga-Module');
-            classes = $.grep(req.$target.classes(), function (el) {
-               if (el === 'icinga-module' || el.match(/^module\-/)) {
-                   return false;
-               }
-               return true;
-            });
-            if (moduleName) {
-                req.$target.data('icingaModule', moduleName);
-                classes.push('icinga-module');
-                classes.push('module-' + moduleName);
-            } else {
-                req.$target.removeData('icingaModule');
-                if (req.$target.attr('data-icinga-module')) {
-                    req.$target.removeAttr('data-icinga-module');
+            if (target !== 'layout') {
+                var moduleName = req.getResponseHeader('X-Icinga-Module');
+                classes = $.grep(req.$target.classes(), function (el) {
+                    if (el === 'icinga-module' || el.match(/^module\-/)) {
+                        return false;
+                    }
+                    return true;
+                });
+                if (moduleName) {
+                    req.$target.data('icingaModule', moduleName);
+                    classes.push('icinga-module');
+                    classes.push('module-' + moduleName);
+                } else {
+                    req.$target.removeData('icingaModule');
+                    if (req.$target.attr('data-icinga-module')) {
+                        req.$target.removeAttr('data-icinga-module');
+                    }
+                }
+                req.$target.attr('class', classes.join(' '));
+
+                var refresh = req.autoRefreshInterval || req.getResponseHeader('X-Icinga-Refresh');
+                if (refresh) {
+                    req.$target.data('icingaRefresh', refresh);
+                } else {
+                    req.$target.removeData('icingaRefresh');
+                    if (req.$target.attr('data-icinga-refresh')) {
+                        req.$target.removeAttr('data-icinga-refresh');
+                    }
                 }
             }
-            req.$target.attr('class', classes.join(' '));
 
             var title = req.getResponseHeader('X-Icinga-Title');
             if (title && ! req.autorefresh && req.$target.closest('.dashboard').length === 0) {
                 this.icinga.ui.setTitle(decodeURIComponent(title));
-            }
-
-            var refresh = req.getResponseHeader('X-Icinga-Refresh');
-            if (refresh) {
-                req.$target.data('icingaRefresh', refresh);
-            } else {
-                req.$target.removeData('icingaRefresh');
-                if (req.$target.attr('data-icinga-refresh')) {
-                    req.$target.removeAttr('data-icinga-refresh');
-                }
             }
 
             // Set a window identifier if the server asks us to do so
@@ -535,7 +546,7 @@
                     var title = $('h1', $el).first();
                     $('h1', targets[i]).first().replaceWith(title);
 
-                    self.loadUrl(url, targets[i]);
+                    _this.loadUrl(url, targets[i]);
                     i++;
                 });
                 rendered = true;
@@ -554,7 +565,7 @@
             }
 
             // .html() removes outer div we added above
-            this.renderContentToContainer($resp.html(), req.$target, req.action, req.autorefresh);
+            this.renderContentToContainer($resp.html(), req.$target, req.action, req.autorefresh, req.forceFocus);
             if (oldNotifications) {
                 oldNotifications.appendTo($('#notifications'));
             }
@@ -564,7 +575,7 @@
             if (newBody) {
                 this.icinga.ui.fixDebugVisibility().triggerWindowResize();
             }
-            self.cacheLoadedIcons(req.$target);
+            _this.cacheLoadedIcons(req.$target);
         },
 
         /**
@@ -581,7 +592,7 @@
                 var url = req.url;
 
                 if (req.$target[0].id === 'col1') {
-                    self.icinga.behaviors.navigation.trySetActiveByUrl(url);
+                    this.icinga.behaviors.navigation.trySetActiveByUrl(url);
                 }
 
                 var $forms = $('[action="' + this.icinga.utils.parseUrl(url).path + '"]');
@@ -676,11 +687,17 @@
                     req.addToHistory = false;
                 } else {
                     if (this.failureNotice === null) {
+                        var now = new Date();
+                        var padString = this.icinga.utils.padString;
                         this.failureNotice = this.createNotice(
                             'error',
-                            'The connection to the Icinga web server was lost at ' +
-                            this.icinga.utils.timeShort() +
-                            '.',
+                            'The connection to the Icinga web server was lost at '
+                            + now.getFullYear()
+                            + '-' + padString(now.getMonth() + 1, 0, 2)
+                            + '-' + padString(now.getDate(), 0, 2)
+                            + ' ' + padString(now.getHours(), 0, 2)
+                            + ':' + padString(now.getMinutes(), 0, 2)
+                            + '.',
                             true
                         );
 
@@ -706,7 +723,7 @@
                 c += ' persist';
             }
             var $notice = $(
-                '<li class="' + c + '">' + message + '</li>'
+                '<li class="' + c + '">' + this.icinga.utils.escape(message) + '</li>'
             ).appendTo($('#notifications'));
 
             this.icinga.ui.fixControls();
@@ -721,11 +738,35 @@
         /**
          * Smoothly render given HTML to given container
          */
-        renderContentToContainer: function (content, $container, action, autorefresh) {
+        renderContentToContainer: function (content, $container, action, autorefresh, forceFocus) {
             // Container update happens here
             var scrollPos = false;
-            var self = this;
+            var _this = this;
             var containerId = $container.attr('id');
+
+            var activeElementPath = false;
+            var focusFallback = false;
+
+            if (forceFocus && forceFocus.length) {
+                activeElementPath = this.icinga.utils.getCSSPath($(forceFocus));
+            } else if (document.activeElement && document.activeElement.id === 'search') {
+                activeElementPath = '#search';
+            } else if (document.activeElement
+                && document.activeElement !== document.body
+                && $.contains($container[0], document.activeElement)
+            ) {
+                // Active element in container
+                var $activeElement = $(document.activeElement);
+                var $pagination = $activeElement.closest('.pagination-control');
+                if ($pagination.length) {
+                    focusFallback = {
+                        'parent': this.icinga.utils.getCSSPath($pagination),
+                        'child': '.active > a'
+                    };
+                }
+                activeElementPath = this.icinga.utils.getCSSPath($activeElement);
+            }
+
             if (typeof containerId !== 'undefined') {
                 if (autorefresh) {
                     scrollPos = $container.scrollTop();
@@ -733,14 +774,11 @@
                     scrollPos = 0;
                 }
             }
-            if (autorefresh && $.contains($container[0], document.activeElement)) {
-                var origFocus = self.icinga.utils.getDomPath(document.activeElement);
-            }
 
             $container.trigger('beforerender');
 
             var discard = false;
-            $.each(self.icinga.behaviors, function(name, behavior) {
+            $.each(_this.icinga.behaviors, function(name, behavior) {
                 if (behavior.renderHook) {
                     var changed = behavior.renderHook(content, $container, action, autorefresh);
                     if (!changed) {
@@ -766,7 +804,7 @@
             // });
 
             $('.container', $container).each(function() {
-                self.stopPendingRequestsFor($(this));
+                _this.stopPendingRequestsFor($(this));
             });
 
             if (false &&
@@ -788,9 +826,42 @@
             }
             this.icinga.ui.assignUniqueContainerIds();
 
-            if (origFocus && origFocus.length > 0 && origFocus[0] !== '') {
+            if (! activeElementPath) {
+                // Active element was not in this container
+                if (! autorefresh) {
+                    setTimeout(function() {
+                        if (typeof $container.attr('tabindex') === 'undefined') {
+                            $container.attr('tabindex', -1);
+                        }
+                        // Do not touch focus in case a module or component already placed it
+                        if ($(document.activeElement).closest('.container').attr('id') !== containerId) {
+                            $container.focus();
+                        }
+                    }, 0);
+                }
+            } else {
                 setTimeout(function() {
-                    $(self.icinga.utils.getElementByDomPath(origFocus)).focus();
+                    var $activeElement = $(activeElementPath);
+
+                    if ($activeElement.length && $activeElement.is(':visible')) {
+                        $activeElement.focus();
+                        if ($activeElement.is('input[type=text]')) {
+                            if (typeof $activeElement[0].setSelectionRange === 'function') {
+                                // Place focus after the last character. Could be extended to other
+                                // input types, would require some \r\n "magic" to work around issues
+                                // with some browsers
+                                var len = $activeElement.val().length;
+                                $activeElement[0].setSelectionRange(len, len);
+                            }
+                        }
+                    } else if (! autorefresh) {
+                        if (focusFallback) {
+                            $(focusFallback.parent).find(focusFallback.child).focus();
+                        } else if (typeof $container.attr('tabindex') === 'undefined') {
+                            $container.attr('tabindex', -1);
+                        }
+                        $container.focus();
+                    }
                 }, 0);
             }
 

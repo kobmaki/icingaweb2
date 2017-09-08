@@ -1,17 +1,21 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\File;
+
+use Traversable;
 
 class Csv
 {
     protected $query;
 
-    protected function __construct() {}
-
-    public static function fromQuery($query)
+    protected function __construct()
     {
-        $csv = new Csv();
+    }
+
+    public static function fromQuery(Traversable $query)
+    {
+        $csv = new static();
         $csv->query = $query;
         return $csv;
     }
@@ -26,7 +30,7 @@ class Csv
     {
         $first = true;
         $csv = '';
-        foreach ($this->query->getQuery()->fetchAll() as $row) {
+        foreach ($this->query as $row) {
             if ($first) {
                 $csv .= implode(',', array_keys((array) $row)) . "\r\n";
                 $first = false;

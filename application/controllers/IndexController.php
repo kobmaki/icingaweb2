@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -17,7 +17,7 @@ class IndexController extends ActionController
     public function preDispatch()
     {
         if ($this->getRequest()->getActionName() !== 'welcome') {
-            // @TODO(el): Avoid landing page redirects: https://dev.icinga.org/issues/9656
+            // @TODO(el): Avoid landing page redirects: https://dev.icinga.com/issues/9656
             $this->redirectNow(Url::fromRequest()->setPath('dashboard'));
         }
     }

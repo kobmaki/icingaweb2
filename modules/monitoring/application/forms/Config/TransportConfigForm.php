@@ -1,14 +1,20 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Forms\Config;
 
+use Icinga\Data\ConfigObject;
+use Icinga\Module\Monitoring\Command\Transport\CommandTransport;
+use Icinga\Module\Monitoring\Exception\CommandTransportException;
 use InvalidArgumentException;
+use Icinga\Application\Platform;
 use Icinga\Exception\IcingaException;
 use Icinga\Exception\NotFoundError;
 use Icinga\Forms\ConfigForm;
+use Icinga\Module\Monitoring\Command\Transport\ApiCommandTransport;
 use Icinga\Module\Monitoring\Command\Transport\LocalCommandFile;
 use Icinga\Module\Monitoring\Command\Transport\RemoteCommandFile;
+use Icinga\Module\Monitoring\Forms\Config\Transport\ApiTransportForm;
 use Icinga\Module\Monitoring\Forms\Config\Transport\LocalTransportForm;
 use Icinga\Module\Monitoring\Forms\Config\Transport\RemoteTransportForm;
 
@@ -30,6 +36,11 @@ class TransportConfigForm extends ConfigForm
      * @var array
      */
     protected $instanceNames;
+
+    /**
+     * @var bool
+     */
+    protected $validatePartial = true;
 
     /**
      * Initialize this form
@@ -68,7 +79,7 @@ class TransportConfigForm extends ConfigForm
      *
      * @param   string  $type               The transport type for which to return a form
      *
-     * @return  Form
+     * @return  \Icinga\Web\Form
      *
      * @throws  InvalidArgumentException    In case the given transport type is invalid
      */
@@ -77,8 +88,10 @@ class TransportConfigForm extends ConfigForm
         switch (strtolower($type)) {
             case LocalCommandFile::TRANSPORT:
                 return new LocalTransportForm();
-            case RemoteCommandFile::TRANSPORT;
+            case RemoteCommandFile::TRANSPORT:
                 return new RemoteTransportForm();
+            case ApiCommandTransport::TRANSPORT:
+                return new ApiTransportForm();
             default:
                 throw new InvalidArgumentException(
                     sprintf($this->translate('Invalid command transport type "%s" given'), $type)
@@ -163,12 +176,6 @@ class TransportConfigForm extends ConfigForm
         }
 
         $transportConfig->merge($data);
-        foreach ($transportConfig->toArray() as $k => $v) {
-            if ($v === null) {
-                unset($transportConfig->$k);
-            }
-        }
-
         $this->config->setSection($name, $transportConfig);
         return $this;
     }
@@ -222,9 +229,13 @@ class TransportConfigForm extends ConfigForm
         );
 
         $transportTypes = array(
+            ApiCommandTransport::TRANSPORT  => $this->translate('Icinga 2 API'),
             LocalCommandFile::TRANSPORT     => $this->translate('Local Command File'),
             RemoteCommandFile::TRANSPORT    => $this->translate('Remote Command File')
         );
+        if (! Platform::extensionLoaded('curl')) {
+            unset($transportTypes[ApiCommandTransport::TRANSPORT]);
+        }
 
         $transportType = isset($formData['transport']) ? $formData['transport'] : null;
         if ($transportType === null) {
@@ -248,6 +259,63 @@ class TransportConfigForm extends ConfigForm
     }
 
     /**
+     * Add a submit button to this form and one to manually validate the configuration
+     *
+     * Calls parent::addSubmitButton() to add the submit button.
+     *
+     * @return  $this
+     */
+    public function addSubmitButton()
+    {
+        parent::addSubmitButton();
+
+        if ($this->getSubForm('transport_form') instanceof ApiTransportForm) {
+            $this->addElement(
+                'submit',
+                'transport_validation',
+                array(
+                    'ignore' => true,
+                    'label' => $this->translate('Validate Configuration'),
+                    'data-progress-label' => $this->translate('Validation In Progress'),
+                    'decorators' => array('ViewHelper')
+                )
+            );
+
+            $this->setAttrib('data-progress-element', 'transport-progress');
+            $this->addElement(
+                'note',
+                'transport-progress',
+                array(
+                    'decorators' => array(
+                        'ViewHelper',
+                        array('Spinner', array('id' => 'transport-progress'))
+                    )
+                )
+            );
+
+            $btnSubmit = $this->getElement('btn_submit');
+            $elements = array('transport_validation', 'transport-progress');
+            if ($btnSubmit !== null) {
+                // In the setup wizard $this is being used as a subform which doesn't have a submit button.
+                $btnSubmit->setDecorators(array('ViewHelper'));
+                array_unshift($elements, 'btn_submit');
+            }
+            $this->addDisplayGroup(
+                $elements,
+                'submit_validation',
+                array(
+                    'decorators' => array(
+                        'FormElements',
+                        array('HtmlTag', array('tag' => 'div', 'class' => 'control-group form-controls'))
+                    )
+                )
+            );
+        }
+
+        return $this;
+    }
+
+    /**
      * Populate the configuration of the transport to load
      */
     public function onRequest()
@@ -257,5 +325,58 @@ class TransportConfigForm extends ConfigForm
             $data['name'] = $this->transportToLoad;
             $this->populate($data);
         }
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isValidPartial(array $formData)
+    {
+        $isValidPartial =  parent::isValidPartial($formData);
+
+        $transportValidation = $this->getElement('transport_validation');
+        if ($transportValidation !== null && $transportValidation->isChecked() && $this->isValid($formData)) {
+            $this->info($this->translate('The configuration has been successfully validated.'));
+        }
+
+        return $isValidPartial;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function isValid($formData)
+    {
+        if (! parent::isValid($formData)) {
+            return false;
+        }
+
+        if (! ($this->getElement('transport_validation') === null || (
+            $this->isSubmitted() && isset($formData['force_creation']) && $formData['force_creation'])
+        )) {
+            try {
+                CommandTransport::createTransport(new ConfigObject($this->getValues()))->probe();
+            } catch (CommandTransportException $e) {
+                $this->error(sprintf(
+                    $this->translate('Failed to successfully validate the configuration: %s'),
+                    $e->getMessage()
+                ));
+
+                $this->addElement(
+                    'checkbox',
+                    'force_creation',
+                    array(
+                        'order'         => 0,
+                        'ignore'        => true,
+                        'label'         => $this->translate('Force Changes'),
+                        'description'   => $this->translate('Check this box to enforce changes without connectivity validation')
+                    )
+                );
+
+                return false;
+            }
+        }
+
+        return true;
     }
 }

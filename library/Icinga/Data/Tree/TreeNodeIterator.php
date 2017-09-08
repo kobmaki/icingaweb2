@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Data\Tree;
 
@@ -92,6 +92,6 @@ class TreeNodeIterator implements RecursiveIterator
      */
     public function isEmpty()
     {
-        return empty($this->children);
+        return ! $this->children->count();
     }
 }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Controllers;
 
@@ -8,8 +8,10 @@ use Icinga\Data\ResourceFactory;
 use Icinga\Exception\ConfigurationError;
 use Icinga\Exception\NotFoundError;
 use Icinga\Forms\ConfirmRemovalForm;
+use Icinga\Module\Monitoring\Forms\Config\TransportReorderForm;
+use Icinga\Web\Controller;
 use Icinga\Web\Notification;
-use Icinga\Module\Monitoring\Controller;
+use Icinga\Module\Monitoring\Backend;
 use Icinga\Module\Monitoring\Forms\Config\BackendConfigForm;
 use Icinga\Module\Monitoring\Forms\Config\SecurityConfigForm;
 use Icinga\Module\Monitoring\Forms\Config\TransportConfigForm;
@@ -20,12 +22,23 @@ use Icinga\Module\Monitoring\Forms\Config\TransportConfigForm;
 class ConfigController extends Controller
 {
     /**
+     * {@inheritdoc}
+     */
+    public function init()
+    {
+        $this->assertPermission('config/modules');
+        parent::init();
+    }
+
+    /**
      * Display a list of available backends and command transports
      */
     public function indexAction()
     {
+        $this->view->commandTransportReorderForm = $form = new TransportReorderForm();
+        $form->handleRequest();
+
         $this->view->backendsConfig = $this->Config('backends');
-        $this->view->transportConfig = $this->Config('commandtransports');
         $this->view->tabs = $this->Module()->getConfigTabs()->activate('backends');
     }
 
@@ -96,7 +109,7 @@ class ConfigController extends Controller
 
         $form->setOnSuccess(function (BackendConfigForm $form) {
             try {
-                $form->add(array_filter($form->getValues()));
+                $form->add($form::transformEmptyValuesToNull($form->getValues()));
             } catch (Exception $e) {
                 $form->error($e->getMessage());
                 return false;
@@ -199,7 +212,9 @@ class ConfigController extends Controller
         $form->setRedirectUrl('monitoring/config');
         $form->setTitle(sprintf($this->translate('Edit Command Transport %s'), $transportName));
         $form->setIniConfig($this->Config('commandtransports'));
-        $form->setInstanceNames($this->backend->select()->from('instance', array('instance_name'))->fetchColumn());
+        $form->setInstanceNames(
+            Backend::createBackend()->select()->from('instance', array('instance_name'))->fetchColumn()
+        );
         $form->setOnSuccess(function (TransportConfigForm $form) use ($transportName) {
             try {
                 $form->edit($transportName, array_map(
@@ -241,10 +256,12 @@ class ConfigController extends Controller
         $form->setRedirectUrl('monitoring/config');
         $form->setTitle($this->translate('Create New Command Transport'));
         $form->setIniConfig($this->Config('commandtransports'));
-        $form->setInstanceNames($this->backend->select()->from('instance', array('instance_name'))->fetchColumn());
+        $form->setInstanceNames(
+            Backend::createBackend()->select()->from('instance', array('instance_name'))->fetchColumn()
+        );
         $form->setOnSuccess(function (TransportConfigForm $form) {
             try {
-                $form->add(array_filter($form->getValues()));
+                $form->add($form::transformEmptyValuesToNull($form->getValues()));
             } catch (Exception $e) {
                 $form->error($e->getMessage());
                 return false;

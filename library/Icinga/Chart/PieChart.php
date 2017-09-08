@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Chart;
 
@@ -208,7 +208,6 @@ class PieChart extends Chart
                 if (!$this->noCaption && isset($pie['labels'])) {
                     $slice->setCaption($pie['labels'][$labelPos++])
                         ->setLabelGroup($labelBox);
-
                 }
                 $lastRadius += $dataset;
             }
@@ -305,4 +304,3 @@ class PieChart extends Chart
         $clipBox->addElement($rect);
     }
 }
-

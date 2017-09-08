@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web;
 
@@ -98,13 +98,13 @@ class JavaScript
         $request = Icinga::app()->getRequest();
         $noCache = $request->getHeader('Cache-Control') === 'no-cache' || $request->getHeader('Pragma') === 'no-cache';
 
+        header('Cache-Control: public');
         if (! $noCache && FileCache::etagMatchesFiles($files)) {
             header("HTTP/1.1 304 Not Modified");
             return;
         } else {
             $etag = FileCache::etagForFiles($files);
         }
-        header('Cache-Control: public');
         header('ETag: "' . $etag . '"');
         header('Content-Type: application/javascript');
 
@@ -117,7 +117,7 @@ class JavaScript
 
         // We do not minify vendor files
         foreach ($vendorFiles as $file) {
-            $out .= file_get_contents($file);
+            $out .= ';' . ltrim(trim(file_get_contents($file)), ';') . "\n";
         }
 
         foreach ($jsFiles as $file) {

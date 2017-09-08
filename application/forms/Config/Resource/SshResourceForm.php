@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Forms\Config\Resource;
 
@@ -51,7 +51,6 @@ class SshResourceForm extends Form
         );
 
         if ($this->getRequest()->getActionName() != 'editresource') {
-
             $callbackValidator = new Zend_Validate_Callback(function ($value) {
                 if (openssl_pkey_get_private($value) === false) {
                     return false;

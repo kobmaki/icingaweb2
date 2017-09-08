@@ -1,18 +1,21 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 /**
  * Class Zend_View_Helper_Util
  */
 class Zend_View_Helper_Util extends Zend_View_Helper_Abstract
 {
-    public function util() {
+    public function util()
+    {
         return $this;
     }
 
     public static function showTimeSince($timestamp)
     {
-        if (! $timestamp) return 'unknown';
+        if (! $timestamp) {
+            return 'unknown';
+        }
         $duration = time() - $timestamp;
         if ($duration > 3600 * 24 * 3) {
             if (date('Y') === date('Y', $timestamp)) {

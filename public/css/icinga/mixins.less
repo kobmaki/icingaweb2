@@ -1,4 +1,4 @@
-/*! Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/*! Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 .box-shadow(@x: 0.2em; @y: 0.2em; @blur: 0.2em; @spread: 0; @color: rgba(83, 83, 83, 0.25)) {
   -webkit-box-shadow: @arguments;
@@ -13,9 +13,11 @@
   border: 2px solid @color;
   color: @color;
   cursor: pointer;
+  line-height: normal;
+  outline: none;
   padding: @vertical-padding @horizontal-padding;
 
-  // Transition mixin does not work w/ comma-separated transistions
+  // Transition mixin does not work w/ comma-separated transitions
   -webkit-transition: background 0.3s ease, color 0.3s ease;
      -moz-transition: background 0.3s ease, color 0.3s ease;
        -o-transition: background 0.3s ease, color 0.3s ease;
@@ -40,15 +42,8 @@
   }
 }
 
-.invisible {
-  // Maintain layout but hide visually and from screen readers
-  visibility: hidden;
-}
-
 .opacity(@opacity: 0.6) {
-  -webkit-opacity: @opacity;
-     -moz-opacity: @opacity;
-          opacity: @opacity;
+  opacity: @opacity;
 }
 
 .transform(@transform) {
@@ -60,9 +55,7 @@
 }
 
 .rounded-corners(@border-radius: 0.4em) {
-  -webkit-border-radius: @border-radius;
-     -moz-border-radius: @border-radius;
-          border-radius: @border-radius;
+  border-radius: @border-radius;
 
   -webkit-background-clip: padding-box;
      -moz-background-clip: padding;
@@ -74,10 +67,6 @@
      -moz-transition: @transition;
        -o-transition: @transition;
           transition: @transition;
-}
-
-.visible {
-  visibility: visible;
 }
 
 // Fadein animation
@@ -124,4 +113,90 @@
      -moz-animation-fill-mode: forwards;
        -o-animation-fill-mode: forwards;
           animation-fill-mode: forwards;
+}
+
+// Mixin for stateful foreground colors, e.g. text or icons
+.fg-stateful {
+  &.state-ok {
+    color: @color-ok;
+  }
+  &.state-up {
+    color: @color-up;
+  }
+  &.state-warning {
+    color: @color-warning;
+    &.handled {
+      color: @color-warning-handled;
+    }
+  }
+  &.state-critical {
+    color: @color-critical;
+    &.handled {
+      color: @color-critical-handled;
+    }
+  }
+  &.state-down {
+    color: @color-down;
+    &.handled {
+      color: @color-down-handled;
+    }
+  }
+  &.state-unreachable {
+    color: @color-unreachable;
+    &.handled {
+      color: @color-unreachable-handled;
+    }
+  }
+  &.state-unknown {
+    color: @color-unknown;
+    &.handled {
+      color: @color-unknown-handled;
+    }
+  }
+  &.state-pending {
+    color: @color-pending;
+  }
+}
+
+// Mixin for stateful background colors
+.bg-stateful {
+  &.state-ok {
+    background-color: @color-ok;
+  }
+  &.state-up {
+    background-color: @color-up;
+  }
+  &.state-warning {
+    background-color: @color-warning;
+    &.handled {
+      background-color: @color-warning-handled;
+    }
+  }
+  &.state-critical {
+    background-color: @color-critical;
+    &.handled {
+      background-color: @color-critical-handled;
+    }
+  }
+  &.state-down {
+    background-color: @color-down;
+    &.handled {
+      background-color: @color-down-handled;
+    }
+  }
+  &.state-unreachable {
+    background-color: @color-unreachable;
+    &.handled {
+      background-color: @color-unreachable-handled;
+    }
+  }
+  &.state-unknown {
+    background-color: @color-unknown;
+    &.handled {
+      background-color: @color-unknown-handled;
+    }
+  }
+  &.state-pending {
+    background-color: @color-pending;
+  }
 }

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Backend\Ido\Query;
 
@@ -56,7 +56,6 @@ class EventhistoryQuery extends IdoQuery
             'type',
             'state',
             'object_type',
-            'object_id',
             'host_name',
             'service_description',
             'host_display_name',
@@ -68,7 +67,9 @@ class EventhistoryQuery extends IdoQuery
             $this->createSubQuery('Downtimeendhistory', $columns),
             $this->createSubQuery('Commenthistory', $columns),
             $this->createSubQuery('Commentdeletionhistory', $columns),
-            $this->createSubQuery('Notification', $columns)
+            $this->createSubQuery('Notificationhistory', $columns),
+            $this->createSubQuery('Flappingstarthistory', $columns),
+            $this->createSubQuery('Flappingendhistory', $columns)
         );
         $sub = $this->db->select()->union($this->subQueries, Zend_Db_Select::SQL_UNION_ALL);
         $this->select->from(array('eh' => $sub), array());

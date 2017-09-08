@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Repository;
 
@@ -69,8 +69,12 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
      */
     public function __clone()
     {
-        $this->query = clone $this->query;
-        $this->iterator = clone $this->iterator;
+        if ($this->query !== null) {
+            $this->query = clone $this->query;
+        }
+        if ($this->iterator !== null) {
+            $this->iterator = clone $this->iterator;
+        }
     }
 
     /**
@@ -105,7 +109,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
      */
     public function from($target, array $columns = null)
     {
-        $this->query = $this->repository->getDataSource()->select();
+        $this->query = $this->repository->getDataSource($target)->select();
         $this->query->from($this->repository->requireTable($target, $this));
         $this->query->columns($this->prepareQueryColumns($target, $columns));
         $this->target = $target;
@@ -200,7 +204,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
      */
     public function getFilterColumns()
     {
-        return $this->repository->getFilterColumns();
+        return $this->repository->getFilterColumns($this->target);
     }
 
     /**
@@ -210,7 +214,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
      */
     public function getSearchColumns()
     {
-        return $this->repository->getSearchColumns();
+        return $this->repository->getSearchColumns($this->target);
     }
 
     /**
@@ -290,7 +294,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
      */
     public function getSortRules()
     {
-        return $this->repository->getSortRules();
+        return $this->repository->getSortRules($this->target);
     }
 
     /**
@@ -599,8 +603,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
                 $aliases[1] !== 1 ? $this->getNativeAlias($aliases[1]) : $columns[1]
             );
 
-            if (
-                $this->repository->providesValueConversion($this->target, $colOne)
+            if ($this->repository->providesValueConversion($this->target, $colOne)
                 || $this->repository->providesValueConversion($this->target, $colTwo)
             ) {
                 $newResults = array();
@@ -712,7 +715,7 @@ class RepositoryQuery implements QueryInterface, SortRules, FilterColumns, Itera
             if ($this->query instanceof Traversable) {
                 $iterator = $this->query;
             } else {
-                $iterator = $this->repository->getDataSource()->query($this->query);
+                $iterator = $this->repository->getDataSource($this->target)->query($this->query);
             }
 
             if ($iterator instanceof IteratorAggregate) {

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 /** @var $this \Icinga\Application\Modules\Module */
 
@@ -52,8 +52,28 @@ $this->providePermission(
     $this->translate('Allow processing commands for toggling features on an instance-wide basis')
 );
 $this->providePermission(
-    'monitoring/command/feature/object',
+    'monitoring/command/feature/object/*',
     $this->translate('Allow processing commands for toggling features on host and service objects')
+);
+$this->providePermission(
+    'monitoring/command/feature/object/active-checks',
+    $this->translate('Allow processing commands for toggling active checks on host and service objects')
+);
+$this->providePermission(
+    'monitoring/command/feature/object/passive-checks',
+    $this->translate('Allow processing commands for toggling passive checks on host and service objects')
+);
+$this->providePermission(
+    'monitoring/command/feature/object/notifications',
+    $this->translate('Allow processing commands for toggling notifications on host and service objects')
+);
+$this->providePermission(
+    'monitoring/command/feature/object/event-handler',
+    $this->translate('Allow processing commands for toggling event handlers on host and service objects')
+);
+$this->providePermission(
+    'monitoring/command/feature/object/flap-detection',
+    $this->translate('Allow processing commands for toggling flap detection on host and service objects')
 );
 $this->providePermission(
     'monitoring/command/send-custom-notification',
@@ -63,6 +83,10 @@ $this->providePermission(
 $this->provideRestriction(
     'monitoring/filter/objects',
     $this->translate('Restrict views to the Icinga objects that match the filter')
+);
+$this->provideRestriction(
+    'monitoring/blacklist/properties',
+    $this->translate('Hide the properties of monitored objects that match the filter')
 );
 
 $this->provideConfigTab('backends', array(
@@ -102,7 +126,7 @@ $section = $this->menuSection(N_('Problems'), array(
         'SummaryNavigationItemRenderer',
         'state' => 'critical'
     ),
-    'icon'      => 'block',
+    'icon'      => 'attention-circled',
     'priority'  => 20
 ));
 $section->add(N_('Host Problems'), array(
@@ -112,7 +136,7 @@ $section->add(N_('Host Problems'), array(
             'hosts_down_unhandled' => $this->translate('%d unhandled hosts down')
         ),
         'state'    => 'critical',
-        'dataView' => 'statussummary'
+        'dataView' => 'unhandledhostproblems'
     ),
     'url'       => 'monitoring/list/hosts?host_problem=1&sort=host_severity',
     'priority'  => 50
@@ -124,7 +148,7 @@ $section->add(N_('Service Problems'), array(
             'services_critical_unhandled' => $this->translate('%d unhandled services critical')
         ),
         'state'    => 'critical',
-        'dataView' => 'statussummary'
+        'dataView' => 'unhandledserviceproblems'
     ),
     'url'       => 'monitoring/list/services?service_problem=1&sort=service_severity&dir=desc',
     'priority'  => 60
@@ -142,7 +166,7 @@ $section->add(N_('Current Downtimes'), array(
  * Overview Section
  */
 $section = $this->menuSection(N_('Overview'), array(
-    'icon'      => 'sitemap',
+    'icon'      => 'binoculars',
     'priority'  => 30
 ));
 $section->add(N_('Tactical Overview'), array(
@@ -186,7 +210,7 @@ $section->add(N_('Downtimes'), array(
  * History Section
  */
 $section = $this->menuSection(N_('History'), array(
-    'icon'      => 'rewind',
+    'icon'      => 'history',
     'priority'  => 90
 ));
 $section->add(N_('Event Grid'), array(
@@ -199,7 +223,7 @@ $section->add(N_('Event Overview'), array(
 ));
 $section->add(N_('Notifications'), array(
     'priority'  => 30,
-    'url'       => 'monitoring/list/notifications',
+    'url'       => 'monitoring/list/notifications?notification_timestamp>=-7%20days',
 ));
 $section->add(N_('Timeline'), array(
     'priority'  => 40,
@@ -212,10 +236,6 @@ $section->add(N_('Timeline'), array(
 $section = $this->menuSection(N_('Reporting'), array(
     'icon'      => 'barchart',
     'priority'  => 100
-));
-
-$section->add(N_('Alert Summary'), array(
-   'url'    => 'monitoring/alertsummary/index'
 ));
 
 /*

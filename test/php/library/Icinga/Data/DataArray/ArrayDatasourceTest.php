@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Data;
 
@@ -24,14 +24,14 @@ class ArrayDatasourceTest extends BaseTestCase
             (object) array(
                 'host'    => 'localhost',
                 'problem' => '1',
-                'service' => 'www.icinga.org',
+                'service' => 'www.icinga.com',
                 'state'   => '0',
                 'handled' => '0'
             ),
             (object) array(
                 'host'    => 'localhost',
                 'problem' => '1',
-                'service' => 'www.icinga.org',
+                'service' => 'www.icinga.com',
                 'state'   => '1',
                 'handled' => '0'
             )

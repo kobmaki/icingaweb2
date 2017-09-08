@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Tests\Icinga\Web;
 
@@ -21,7 +21,9 @@ class MenuTest extends BaseTestCase
 
         $this->assertEquals(
             array('aaa', 'bb', 'bbb', 'ccc', 'ccc2', 'ccc5'),
-            array_map(function ($m) { return $m->getTitle(); }, iterator_to_array($menu->order())),
+            array_map(function ($m) {
+                return $m->getTitle();
+            }, iterator_to_array($menu->order())),
             'Menu::order() does not return its elements in natural order'
         );
     }

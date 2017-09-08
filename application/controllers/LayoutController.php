@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Controllers;
 
@@ -19,5 +19,10 @@ class LayoutController extends ActionController
         $this->setAutorefreshInterval(15);
         $this->_helper->layout()->disableLayout();
         $this->view->menuRenderer = Icinga::app()->getMenu()->getRenderer();
+    }
+
+    public function announcementsAction()
+    {
+        $this->_helper->layout()->disableLayout();
     }
 }

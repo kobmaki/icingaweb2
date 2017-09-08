@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Module\Monitoring\Web\Controller;
 
@@ -10,6 +10,7 @@ use Icinga\Module\Monitoring\Forms\Command\Object\DeleteDowntimeCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ObjectsCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\RemoveAcknowledgementCommandForm;
 use Icinga\Module\Monitoring\Forms\Command\Object\ToggleObjectFeaturesCommandForm;
+use Icinga\Module\Monitoring\Hook\DetailviewExtensionHook;
 use Icinga\Web\Hook;
 use Icinga\Web\Url;
 use Icinga\Web\Widget\Tabextension\DashboardAction;
@@ -55,31 +56,16 @@ abstract class MonitoredObjectController extends Controller
     public function showAction()
     {
         $this->setAutorefreshInterval(10);
+        $this->setupQuickActionForms();
         $auth = $this->Auth();
-        if ($auth->hasPermission('monitoring/command/schedule-check')) {
-            $checkNowForm = new CheckNowCommandForm();
-            $checkNowForm
-                ->setObjects($this->object)
-                ->handleRequest();
-            $this->view->checkNowForm = $checkNowForm;
-        }
-        if (! in_array((int) $this->object->state, array(0, 99))) {
-            if ((bool) $this->object->acknowledged) {
-                if ($auth->hasPermission('monitoring/command/remove-acknowledgement')) {
-                    $removeAckForm = new RemoveAcknowledgementCommandForm();
-                    $removeAckForm
-                        ->setObjects($this->object)
-                        ->handleRequest();
-                    $this->view->removeAckForm = $removeAckForm;
-                }
-            }
-        }
         $this->object->populate();
-        $toggleFeaturesForm = new ToggleObjectFeaturesCommandForm();
+        $this->handleFormatRequest();
+        $toggleFeaturesForm = new ToggleObjectFeaturesCommandForm(array(
+            'backend'   => $this->backend,
+            'objects'   => $this->object
+        ));
         $toggleFeaturesForm
-            ->setBackend($this->backend)
             ->load($this->object)
-            ->setObjects($this->object)
             ->handleRequest();
         $this->view->toggleFeaturesForm = $toggleFeaturesForm;
         if (! empty($this->object->comments) && $auth->hasPermission('monitoring/command/comment/delete')) {
@@ -94,6 +80,12 @@ abstract class MonitoredObjectController extends Controller
         }
         $this->view->showInstance = $this->backend->select()->from('instance')->count() > 1;
         $this->view->object = $this->object;
+
+        $this->view->extensionsHtml = array();
+        foreach (Hook::all('Monitoring\DetailviewExtension') as $hook) {
+            /** @var DetailviewExtensionHook $hook */
+            $this->view->extensionsHtml[] = $hook->setView($this->view)->getHtmlForObject($this->object);
+        }
     }
 
     /**
@@ -121,14 +113,37 @@ abstract class MonitoredObjectController extends Controller
     protected function handleCommandForm(ObjectsCommandForm $form)
     {
         $form
+            ->setBackend($this->backend)
             ->setObjects($this->object)
             ->setRedirectUrl(Url::fromPath($this->commandRedirectUrl)->setParams($this->params))
             ->handleRequest();
         $this->view->form = $form;
         $this->view->object = $this->object;
         $this->view->tabs->remove('dashboard');
+        $this->view->tabs->remove('menu-entry');
         $this->_helper->viewRenderer('partials/command/object-command-form', null, true);
+        $this->setupQuickActionForms();
         return $form;
+    }
+
+    /**
+     * Export to JSON if requested
+     */
+    protected function handleFormatRequest($query = null)
+    {
+        if ($this->params->get('format') === 'json'
+            || $this->getRequest()->getHeader('Accept') === 'application/json'
+        ) {
+            $payload = (array) $this->object->properties;
+            $payload += array(
+                'contacts'          => $this->object->contacts->fetchPairs(),
+                'contact_groups'    => $this->object->contactgroups->fetchPairs(),
+                'vars'              => $this->object->customvars
+            );
+            $groupName = $this->object->getType() . 'groups';
+            $payload[$groupName] = $this->object->$groupName;
+            $this->getResponse()->json()->setSuccessData($payload)->sendResponse();
+        }
     }
 
     /**
@@ -231,5 +246,28 @@ abstract class MonitoredObjectController extends Controller
             );
         }
         $tabs->extend(new DashboardAction())->extend(new MenuAction());
+    }
+
+    /**
+     * Create quick action forms and pass them to the view
+     */
+    protected function setupQuickActionForms()
+    {
+        $auth = $this->Auth();
+        if ($auth->hasPermission('monitoring/command/schedule-check')) {
+            $this->view->checkNowForm = $checkNowForm = new CheckNowCommandForm();
+            $checkNowForm
+                ->setObjects($this->object)
+                ->handleRequest();
+        }
+        if (! in_array((int) $this->object->state, array(0, 99))
+            && $this->object->acknowledged
+            && $auth->hasPermission('monitoring/command/remove-acknowledgement')
+        ) {
+            $this->view->removeAckForm = $removeAckForm = new RemoveAcknowledgementCommandForm();
+            $removeAckForm
+                ->setObjects($this->object)
+                ->handleRequest();
+        }
     }
 }

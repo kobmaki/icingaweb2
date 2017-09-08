@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Data;
 
@@ -56,41 +56,46 @@ class ResourceFactory implements ConfigAwareFactory
     }
 
     /**
-     * Return the configuration of all existing resources, or get all resources of a given type.
+     * Get the configuration of all existing resources, or all resources of the given type
      *
-     * @return Config          The configuration containing all resources
+     * @param   string  $type   Filter for resource type
+     *
+     * @return  Config          The resources configuration
      */
-    public static function getResourceConfigs()
+    public static function getResourceConfigs($type = null)
     {
         self::assertResourcesExist();
-        return self::$resources;
+        if ($type === null) {
+            return self::$resources;
+        }
+        $resources = array();
+        foreach (self::$resources as $name => $resource) {
+            if ($resource->get('type') === $type) {
+                $resources[$name] = $resource;
+            }
+        }
+        return Config::fromArray($resources);
     }
 
     /**
-     * Check if the existing resources are set. If not, throw an error.
+     * Check if the existing resources are set. If not, load them from resources.ini
      *
      * @throws  ConfigurationError
      */
     private static function assertResourcesExist()
     {
         if (self::$resources === null) {
-            throw new ConfigurationError(
-                'Resources not set up. Please contact your Icinga Web administrator'
-            );
+            self::$resources = Config::app('resources');
         }
     }
 
     /**
-     * Create a single resource from the given configuration.
+     * Create and return a resource based on the given configuration
      *
-     * NOTE: The factory does not test if the given configuration is valid and the resource is accessible, this
-     * depends entirely on the implementation of the returned resource.
+     * @param   ConfigObject    $config     The configuration of the resource to create
      *
-     * @param ConfigObject $config                   The configuration for the created resource.
-     *
-     * @return DbConnection|LdapConnection|LivestatusConnection An object that can be used to access
-     *         the given resource. The returned class depends on the configuration property 'type'.
-     * @throws ConfigurationError When an unsupported type is given
+     * @return  Selectable                  The resource
+     * @throws  ConfigurationError          In case of an unsupported type or invalid configuration
      */
     public static function createResource(ConfigObject $config)
     {
@@ -99,6 +104,10 @@ class ResourceFactory implements ConfigAwareFactory
                 $resource = new DbConnection($config);
                 break;
             case 'ldap':
+                if (empty($config->root_dn)) {
+                    throw new ConfigurationError('LDAP root DN missing');
+                }
+
                 $resource = new LdapConnection($config);
                 break;
             case 'livestatus':
@@ -116,6 +125,7 @@ class ResourceFactory implements ConfigAwareFactory
                     $config->type
                 );
         }
+
         return $resource;
     }
 

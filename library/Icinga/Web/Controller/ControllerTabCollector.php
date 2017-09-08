@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Controller;
 
@@ -74,7 +74,7 @@ class ControllerTabCollector
      */
     private static function createModuleConfigurationTabs($controllerName, Module $module)
     {
-        // TODO(el): Only works for controllers w/o namepsace: https://dev.icinga.org/issues/4149
+        // TODO(el): Only works for controllers w/o namepsace: https://dev.icinga.com/issues/4149
         $controllerDir = $module->getControllerDir();
         $name = $module->getName();
 

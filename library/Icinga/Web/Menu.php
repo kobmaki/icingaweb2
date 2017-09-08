@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web;
 
@@ -260,8 +260,9 @@ class Menu implements RecursiveIterator
             ));
             if (Logger::writesToFile()) {
                 $section->add(t('Application Log'), array(
-                    'url'      => 'list/applicationlog',
-                    'priority' => 710
+                    'url'        => 'list/applicationlog',
+                    'permission' => 'application/log',
+                    'priority'   => 710
                 ));
             }
 

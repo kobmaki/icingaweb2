@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2015 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Form\Decorator;
 
@@ -57,10 +57,10 @@ class FormHints extends Zend_Form_Decorator_Abstract
 
         $hints = $this->recurseForm($form, $entirelyRequired);
         if ($entirelyRequired !== null) {
-            $hints[] = $form->getView()->translate(sprintf(
-                '%s Required field',
+            $hints[] = sprintf(
+                $form->getView()->translate('%s Required field'),
                 $form->getRequiredCue()
-            ));
+            );
         }
 
         if (empty($hints)) {

@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2014 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Web\Widget;
 
@@ -54,6 +54,13 @@ class FilterEditor extends AbstractWidget
      * @var string
      */
     private $selectedIdx;
+
+    /**
+     * Whether the filter control is visible
+     *
+     * @var bool
+     */
+    protected $visible = true;
 
     /**
      * Create a new FilterWidget
@@ -141,6 +148,30 @@ class FilterEditor extends AbstractWidget
     public function preserveParams()
     {
         $this->preserveParams = func_get_args();
+        return $this;
+    }
+
+    /**
+     * Get whether the filter control is visible
+     *
+     * @return  bool
+     */
+    public function isVisible()
+    {
+        return $this->visible;
+    }
+
+    /**
+     * Set whether the filter control is visible
+     *
+     * @param   bool    $visible
+     *
+     * @return  $this
+     */
+    public function setVisible($visible)
+    {
+        $this->visible = (bool) $visible;
+
         return $this;
     }
 
@@ -292,11 +323,12 @@ class FilterEditor extends AbstractWidget
                 if ($request->get('cancel') === 'Cancel') {
                     $this->redirectNow($this->preservedUrl()->without('modifyFilter'));
                 }
-
-                $filter = $this->applyChanges($request->getPost());
-                $url = $this->url()->setQueryString($filter->toQueryString())->addParams($preserve);
-                $url->getParams()->add('modifyFilter');
-                $this->redirectNow($url);
+                if ($request->get('formUID') === 'FilterEditor') {
+                    $filter = $this->applyChanges($request->getPost());
+                    $url = $this->url()->setQueryString($filter->toQueryString())->addParams($preserve);
+                    $url->getParams()->add('modifyFilter');
+                    $this->redirectNow($url);
+                }
             }
             $this->url()->getParams()->add('modifyFilter');
         }
@@ -477,7 +509,6 @@ class FilterEditor extends AbstractWidget
                  . $this->removeLink($filter)
                  . $this->addLink($filter)
                  ;
-
         }
     }
 
@@ -490,7 +521,7 @@ class FilterEditor extends AbstractWidget
         return sprintf(
             '<input type="text" name="%s" value="%s" />',
             $this->elementId('value', $filter),
-            $value
+            $this->view()->escape($value)
         );
     }
 
@@ -657,7 +688,7 @@ class FilterEditor extends AbstractWidget
                 $parent = $filter->getById($addTo);
                 $f = Filter::expression($add['column'], $add['sign'], $add['value']);
                 if (isset($add['operator'])) {
-                    switch($add['operator']) {
+                    switch ($add['operator']) {
                         case 'AND':
                             if ($parent->isExpression()) {
                                 if ($parent->isRootNode()) {
@@ -703,8 +734,10 @@ class FilterEditor extends AbstractWidget
 
     public function renderSearch()
     {
+        $preservedUrl = $this->preservedUrl();
+
         $html = ' <form method="post" class="search inline" action="'
-              . $this->preservedUrl()
+              . $preservedUrl
               . '"><input type="text" name="q" style="width: 8em" class="search" value="" placeholder="'
               . t('Search...')
               . '" /></form>';
@@ -714,12 +747,13 @@ class FilterEditor extends AbstractWidget
         } else {
             $title = t('Modify this filter');
             if (! $this->filter->isEmpty()) {
-                $title .= ': ' . $this->filter;
+                $title .= ': ' . $this->view()->escape($this->filter);
             }
         }
+
         return $html
             . '<a href="'
-            . $this->preservedUrl()->with('modifyFilter', true)
+            . $preservedUrl->with('modifyFilter', ! $preservedUrl->getParam('modifyFilter'))
             . '" aria-label="'
             . $title
             . '" title="'
@@ -731,8 +765,14 @@ class FilterEditor extends AbstractWidget
 
     public function render()
     {
+        if (! $this->visible) {
+            return '';
+        }
         if (! $this->preservedUrl()->getParam('modifyFilter')) {
-            return '<div class="filter">' . $this->renderSearch() . $this->shorten($this->filter, 50) . '</div>';
+            return '<div class="filter">'
+                . $this->renderSearch()
+                . $this->view()->escape($this->shorten($this->filter, 50))
+                . '</div>';
         }
         return  '<div class="filter">'
             . $this->renderSearch()
@@ -746,6 +786,7 @@ class FilterEditor extends AbstractWidget
             . '<input type="submit" name="submit" value="Apply" />'
             . '<input type="submit" name="cancel" value="Cancel" />'
             . '</div>'
+            . '<input type="hidden" name="formUID" value="FilterEditor">'
             . '</form>'
             . '</div>';
     }

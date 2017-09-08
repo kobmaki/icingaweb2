@@ -1,5 +1,5 @@
 <?php
-/* Icinga Web 2 | (c) 2013-2015 Icinga Development Team | GPLv2+ */
+/* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 namespace Icinga\Authentication\User;
 
@@ -117,8 +117,8 @@ class DbUserBackend extends DbRepository implements UserBackendInterface, Inspec
             $userLabel          => 'user',
             t('Username')       => 'user_name',
             t('Active')         => 'is_active',
-            t('Created At')     => 'created_at',
-            t('Last Modified')  => 'last_modified'
+            t('Created at')     => 'created_at',
+            t('Last modified')  => 'last_modified'
         );
     }
 
@@ -285,12 +285,7 @@ class DbUserBackend extends DbRepository implements UserBackendInterface, Inspec
         $insp = new Inspection('Db User Backend');
         $insp->write($this->ds->inspect());
         try {
-            $users = $this->select()->where('is_active', true)->count();
-            if ($users > 0) {
-                $insp->write(sprintf('%s active users', $users));
-            } else {
-                return $insp->error('0 active users', $users);
-            }
+            $insp->write(sprintf('%s active users', $this->select()->where('is_active', true)->count()));
         } catch (Exception $e) {
             $insp->error(sprintf('Query failed: %s', $e->getMessage()));
         }
