@@ -375,7 +375,7 @@ class Platform
      */
     public static function hasIbmSupport()
     {
-      return static::extensionLoaded('pdo_ibm') && static::classExists('Zend_Db_Adapter_Pdo_Ibm');
+        return static::extensionLoaded('pdo_ibm') && static::classExists('Zend_Db_Adapter_Pdo_Ibm');
     }
 
     /**

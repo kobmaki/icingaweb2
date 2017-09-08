@@ -59,7 +59,7 @@ class DbResourceForm extends Form
                 $offerSsl = true;
             }
         } elseif ($dbChoice === 'ibm') {
-          $offerIbm = true;
+            $offerIbm = true;
         }
 
         $socketInfo = '';
