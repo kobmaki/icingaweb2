@@ -24,6 +24,13 @@ class AuthBackendPage extends Form
     protected $config;
 
     /**
+     * Default values for the subform's elements suggested by a previous step
+     *
+     * @var string[]
+     */
+    protected $suggestions = array();
+
+    /**
      * Initialize this page
      */
     public function init()
@@ -72,12 +79,16 @@ class AuthBackendPage extends Form
             ));
         } elseif ($this->config['type'] === 'ldap') {
             $type = null;
-            if (! isset($formData['type']) && isset($formData['backend'])) {
-                $type = $formData['backend'];
-                $formData['type'] = $type;
+            if (! isset($formData['type'])) {
+                if (isset($formData['backend'])) {
+                    $formData['type'] = $type = $formData['backend'];
+                } elseif (isset($this->suggestions['backend'])) {
+                    $formData['type'] = $type = $this->suggestions['backend'];
+                }
             }
 
             $backendForm = new LdapBackendForm();
+            $backendForm->setSuggestions($this->suggestions);
             $backendForm->setResources(array($this->config['name']));
             $backendForm->create($formData);
             $backendForm->getElement('resource')->setIgnore(true);
@@ -204,7 +215,7 @@ class AuthBackendPage extends Form
             }
 
             $this->info($this->translate('The configuration has been successfully validated.'));
-        } elseif (isset($formData['btn_discover_domain'])) {
+        } elseif (isset($formData['discovery_btn']) || isset($formData['btn_discover_domain'])) {
             return parent::isValidPartial($formData);
         } elseif (! isset($formData['backend_validation'])) {
             // This is usually done by isValid(Partial), but as we're not calling any of these...
@@ -230,5 +241,29 @@ class AuthBackendPage extends Form
                 'description'   => $this->translate('Check this to not to validate authentication using this backend')
             )
         );
+    }
+
+    /**
+     * Get default values for the subform's elements suggested by a previous step
+     *
+     * @return string[]
+     */
+    public function getSuggestions()
+    {
+        return $this->suggestions;
+    }
+
+    /**
+     * Set default values for the subform's elements suggested by a previous step
+     *
+     * @param string[] $suggestions
+     *
+     * @return $this
+     */
+    public function setSuggestions(array $suggestions)
+    {
+        $this->suggestions = $suggestions;
+
+        return $this;
     }
 }

@@ -12,6 +12,7 @@
   bottom: 0;
   padding: .25em @gutter;
   position: fixed;
+  line-height: 1;
 
   &:before {
     background: -webkit-linear-gradient(bottom, @body-bg-color 0%, rgba(255,255,255,0) 100%);
@@ -561,6 +562,18 @@ form.instance-features span.description, form.object-features span.description {
     color: @body-bg-color;
     padding: 0.2em;
   }
+
+  .state-down {
+    background-color: @color-down;
+    color: @body-bg-color;
+    padding: 0.2em;
+  }
+
+  .state-up {
+    background-color: @color-up;
+    color: @body-bg-color;
+    padding: 0.2em;
+  }
 }
 
 .go-ahead a {
@@ -569,6 +582,17 @@ form.instance-features span.description, form.object-features span.description {
   &:hover {
     border-bottom: 1px @text-color solid;
     text-decoration: none;
+  }
+}
+
+.event-details {
+  .badge {
+    font-size: 0.6em;
+    margin-right: 0.5em;
+  }
+
+  .state-label {
+    vertical-align: middle;
   }
 }
 

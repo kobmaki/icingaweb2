@@ -21,7 +21,20 @@ class icingaweb2_dev (
   }
 
   # TODO(el): icinga-gui is not a icingaweb2_dev package
-  package { [ 'php-gd', 'php-intl', 'php-pdo', 'php-ldap', 'php-phpunit-PHPUnit', 'icinga-gui' ]:
+  package { [
+    'rh-php71-php-cli',
+    'rh-php71-php-gd',
+    'rh-php71-php-intl',
+    'rh-php71-php-pdo',
+    'rh-php71-php-mysqlnd',
+    'rh-php71-php-pgsql',
+    'rh-php71-php-ldap',
+    'rh-php71-php-xml',
+    'rh-php71-php-mbstring',
+    'sclo-php71-php-pecl-xdebug',
+    'sclo-php71-php-pecl-imagick',
+    'php-phpunit-PHPUnit'
+  ]:
     ensure => latest,
     notify => Service['apache'],
     require => Class['icinga_packages'],

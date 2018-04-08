@@ -1,5 +1,57 @@
 # Upgrading Icinga Web 2 <a id="upgrading"></a>
 
+Upgrading Icinga Web 2 is quite straightforward. Usually the only manual steps involved are schema updates for the
+Icinga Web 2 database.
+
+Specific version upgrades are described below. Please note that version updates are incremental. An upgrade from
+v2.3 to v2.5 requires to follow the instructions for v2.4 too.
+
+## Upgrading to Icinga Web 2 2.5.x <a id="upgrading-to-2.5.x"></a>
+
+> **Attention**
+>
+> Icinga Web 2 v2.5 requires **at least PHP 5.6**.
+
+**Breaking changes**
+
+* Hash marks (`#`) in INI files are no longer recognized as comments by
+  [parse_ini_file](https://secure.php.net/manual/en/function.parse-ini-file.php) since PHP 7.0.
+* Existing sessions of logged-in users do no longer work as expected due to a change in the `User` data structure.
+  Everyone who was logged in before the upgrade has to log out once.
+
+**Changes in packaging and dependencies**
+
+Valid for distributions:
+
+* RHEL / CentOS 6 + 7
+  * Upgrading to PHP 7.0 / 7.1 via RedHat SCL (new dependency)
+  * See [Upgrading to FPM](02-Installation.md#upgrading-to-fpm) for manual steps that
+    are required
+* SUSE SLE 12
+  * Upgrading PHP to >= 5.6.0 via the alternative packages.
+    You might have to confirm the replacement of PHP < 5.6 - but that
+    should work with any other PHP app as well.
+  * Make sure to enable the new Apache module `a2enmod php7` and restart `apache2`
+
+**Discontinued package updates**
+
+Icinga Web 2 v2.5+ is not supported on these platforms:
+
+* Debian 7 wheezy
+* Ubuntu 14.04 LTS (trusty)
+* SUSE SLE 11 (all service packs)
+
+Please consider an upgrade of your central Icinga system to a newer distribution release.
+
+[packages.icinga.com](https://packages.icinga.com) provides an overview about currently supported distributions.
+
+**Database schema**
+
+Icinga Web 2 v2.5.0 requires a schema update for the database. The database schema has been adjusted to support
+usernames up to 254 characters. This is necessary to support the new domain-aware authentication feature.
+
+Continue here for [MySQL](80-Upgrading.md#upgrading-mysql-db) and [PostgreSQL](80-Upgrading.md#upgrading-pgsql-db).
+
 ## Upgrading to Icinga Web 2 2.4.x <a id="upgrading-to-2.4.x"></a>
 
 * Icinga Web 2 version 2.4.x does not introduce any backward incompatible change.
@@ -82,3 +134,67 @@ If you delegated authentication to your web server using the `autologin` backend
 authentication backend to be able to log in again. The new name better reflects 
 what's going on. A similar change
 affects environments that opted for not storing preferences, your new backend is `none`.
+
+## Upgrading the MySQL Database <a id="upgrading-mysql-db"></a>
+
+If you installed Icinga Web 2 from package, please check the upgrade scripts located in
+**/usr/share/doc/icingaweb2/schema/mysql-upgrades** to update your database schema.
+In case you installed Icinga Web 2 from source, please find the upgrade scripts in **etc/schema/mysql-upgrades**.
+
+> **Note**
+>
+> If there isn't an upgrade file for your current version available, there's nothing to do.
+
+Apply all database schema upgrade files incrementally.
+
+```
+# mysql -u root -p icingaweb2 < /usr/share/doc/icingaweb2/schema/mysql-upgrades/<version>.sql
+```
+
+**Example:** You are upgrading Icinga Web 2 from version `2.4.0` to `2.5.0`. Look into
+the `upgrade` directory:
+
+```
+$ ls /usr/share/doc/icingaweb2/schema/mysql-upgrades/
+2.0.0beta3-2.0.0rc1.sql  2.5.0.sql
+```
+
+The upgrade file `2.5.0.sql` must be applied for the v2.5.0 release. If there are multiple
+upgrade files involved, apply them incrementally.
+
+```
+# mysql -u root -p icinga < /usr/share/doc/icingaweb2/schema/mysql-upgrades/2.5.0.sql
+```
+
+## Upgrading the PostgreSQL Database <a id="upgrading-pgsql-db"></a>
+
+If you installed Icinga Web 2 from package, please check the upgrade scripts located in
+**/usr/share/doc/icingaweb2/schema/pgsql-upgrades** to update your database schema.
+In case you installed Icinga Web 2 from source, please find the upgrade scripts in **etc/schema/pgsql-upgrades**.
+
+> **Note**
+>
+> If there isn't an upgrade file for your current version available, there's nothing to do.
+
+Apply all database schema upgrade files incrementally.
+
+```
+# export PGPASSWORD=icingaweb2
+# psql -U icingaweb2 -d icingaweb2 < /usr/share/doc/icingaweb2/schema/pgsql-upgrades/<version>.sql
+```
+
+**Example:** You are upgrading Icinga Web 2 from version `2.4.0` to `2.5.0`. Look into
+the `upgrade` directory:
+
+```
+$ ls /usr/share/doc/icingaweb2/schema/pgsql-upgrades/
+2.0.0beta3-2.0.0rc1.sql  2.5.0.sql
+```
+
+The upgrade file `2.5.0.sql` must be applied for the v2.5.0 release. If there are multiple
+upgrade files involved, apply them incrementally.
+
+```
+# export PGPASSWORD=icingaweb2
+# psql -U icingaweb2 -d icingaweb2 < /usr/share/doc/icingaweb2/schema/pgsql-upgrades/2.5.0.sql
+```

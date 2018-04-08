@@ -10,9 +10,10 @@
         Icinga.EventListener.call(this, icinga);
         this.on('click', '#menu a', this.linkClicked, this);
         this.on('click', '#menu tr[href]', this.linkClicked, this);
-        this.on('mouseenter', '#menu > nav > ul > li', this.menuTitleHovered, this);
-        this.on('mouseleave', '#sidebar', this.leaveSidebar, this);
         this.on('rendered', '#menu', this.onRendered, this);
+        this.on('mouseenter', '#menu .nav-level-1 > .nav-item', this.showFlyoutMenu, this);
+        this.on('mouseleave', '#menu-container', this.hideFlyoutMenu, this);
+        this.on('click', '#toggle-sidebar', this.toggleSidebar, this);
 
         /**
          * The DOM-Path of the active item
@@ -24,21 +25,13 @@
         this.active = null;
 
         /**
-         * The DOM-Path of the hovered item
-         *
-         * @see getDomPath
-         *
-         * @type {null|Array}
-         */
-        this.hovered = null;
-
-        /**
          * The menu
          *
          * @type {jQuery}
          */
         this.$menu = null;
     };
+
     Navigation.prototype = new Icinga.EventListener();
 
     /**
@@ -71,7 +64,7 @@
     };
 
     /**
-     * Re-render the menu selection and menu hovering according to the current state
+     * Re-render the menu selection according to the current state
      */
     Navigation.prototype.refresh = function() {
         // restore selection to current active element
@@ -89,14 +82,6 @@
                 $el.html($el.html());
             }
         }
-
-        // restore hovered menu to current hovered element
-        if (this.hovered) {
-            var hovered = this.icinga.utils.getElementByDomPath(this.hovered);
-            if (hovered) {
-                this.hoverElement($(hovered));
-            }
-        }
     };
 
     /**
@@ -107,26 +92,13 @@
     Navigation.prototype.linkClicked = function(event) {
         var $a = $(this);
         var href = $a.attr('href');
-        var $li;
         var _this = event.data.self;
         var icinga = _this.icinga;
 
-        _this.hovered = null;
         if (href.match(/#/)) {
             // ...it may be a menu section without a dedicated link.
             // Switch the active menu item:
             _this.setActive($a);
-            $li = $a.closest('li');
-            if ($li.hasClass('hover')) {
-                $li.removeClass('hover');
-            }
-            if (href === '#') {
-                // Allow to access dropdown menu by keyboard
-                if ($a.hasClass('dropdown-toggle')) {
-                    $a.closest('li').toggleClass('hover');
-                }
-                return;
-            }
         } else {
             _this.setActive($(event.target));
         }
@@ -145,19 +117,24 @@
      * @param url   {String}    The url to match
      */
     Navigation.prototype.setActiveByUrl = function(url) {
+        var $menu = $('#menu');
+
+        if (! $menu.length) {
+            return;
+        }
 
         // try to active the first item that has an exact URL match
-        this.setActive(this.$menu.find('[href="' + url + '"]'));
+        this.setActive($menu.find('[href="' + url + '"]'));
 
         // the url may point to the search field, which must be activated too
         if (! this.active) {
-            this.setActive(this.$menu.find('form[action="' + this.icinga.utils.parseUrl(url).path + '"]'));
+            this.setActive($menu.find('form[action="' + this.icinga.utils.parseUrl(url).path + '"]'));
         }
 
         // some urls may have custom filters which won't match any menu item, in that case search
         // for a menu item that points to the base action without any filters
         if (! this.active) {
-            this.setActive(this.$menu.find('[href="' + this.icinga.utils.parseUrl(url).path + '"]').first());
+            this.setActive($menu.find('[href="' + this.icinga.utils.parseUrl(url).path + '"]').first());
         }
     };
 
@@ -234,6 +211,96 @@
     };
 
     /**
+     * Show the fly-out menu
+     *
+     * @param e
+     */
+    Navigation.prototype.showFlyoutMenu = function(e) {
+        var $layout = $('#layout');
+
+        if ($layout.hasClass('minimal-layout')) {
+            return;
+        }
+
+        var $target = $(this);
+        var $flyout = $target.find('.nav-level-2');
+
+        if (! $flyout.length) {
+            $layout.removeClass('menu-hovered');
+            $target.siblings().not($target).removeClass('hover');
+            return;
+        }
+
+        var delay = 600;
+
+        if ($layout.hasClass('menu-hovered')) {
+            delay = 0;
+        }
+
+        setTimeout(function() {
+            try {
+                if (! $target.is(':hover')) {
+                    return;
+                }
+            } catch(e) { /* Bypass because if IE8 */ }
+
+            $layout.addClass('menu-hovered');
+            $target.siblings().not($target).removeClass('hover');
+            $target.addClass('hover');
+
+            $flyout.css({
+                bottom: 'auto',
+                top: $target.offset().top + $target.outerHeight()
+            });
+
+            var rect = $flyout[0].getBoundingClientRect();
+
+            if (rect.y + rect.height > window.innerHeight) {
+                $flyout.css({
+                    bottom: 0,
+                    top: 'auto'
+                });
+            }
+        }, delay);
+    };
+
+    /**
+     * Hide the fly-out menu
+     *
+     * @param e
+     */
+    Navigation.prototype.hideFlyoutMenu = function(e) {
+        var $layout = $('#layout');
+        var $hovered = $('#menu').find('.nav-level-1 > .nav-item.hover');
+
+        if (! $hovered.length) {
+            $layout.removeClass('menu-hovered');
+
+            return;
+        }
+
+        setTimeout(function() {
+            try {
+                if ($hovered.is(':hover') || $('#menu-container').is(':hover')) {
+                    return;
+                }
+            } catch(e) { /* Bypass because if IE8 */ };
+            $hovered.removeClass('hover');
+            $layout.removeClass('menu-hovered');
+        }, 600);
+    };
+
+    /**
+     * Collapse or expand sidebar
+     *
+     * @param {Object} e Event
+     */
+    Navigation.prototype.toggleSidebar = function(e) {
+        $('#layout').toggleClass('sidebar-collapsed');
+        $(window).trigger('resize');
+    };
+
+    /**
      * Called when the history changes
      *
      * @param url   The url of the new state
@@ -267,87 +334,6 @@
         return this.active;
     };
 
-    Navigation.prototype.menuTitleHovered = function(event) {
-        if ($('#layout').hasClass('minimal-layout')) {
-            return;
-        }
-
-        var $li = $(this),
-            delay = 800,
-            _this = event.data.self;
-
-        _this.hovered = null;
-        if ($li.hasClass('active')) {
-            $li.siblings().removeClass('hover');
-            return;
-        }
-        if ($li.children('ul').children('li').length === 0) {
-            return;
-        }
-        if ($('#menu').scrollTop() > 0) {
-            return;
-        }
-
-        if ($('#layout').hasClass('hoveredmenu')) {
-            delay = 0;
-        }
-
-        setTimeout(function () {
-            try {
-                if (!$li.is('li:hover')) {
-                    return;
-                }
-                if ($li.hasClass('active')) {
-                    return;
-                }
-            } catch(e) { /* Bypass because if IE8 */ }
-
-            $li.siblings().each(function () {
-                var $sibling = $(this);
-                try {
-                    if ($sibling.is('li:hover')) {
-                        return;
-                    }
-                } catch(e) { /* Bypass because if IE8 */ };
-                if ($sibling.hasClass('hover')) {
-                    $sibling.removeClass('hover');
-                }
-            });
-            _this.hoverElement($li);
-        }, delay);
-    };
-
-    Navigation.prototype.leaveSidebar = function (event) {
-        var $sidebar = $(this),
-            $li = $sidebar.find('li.hover'),
-            _this = event.data.self;
-        if (! $li.length) {
-            $('#layout').removeClass('hoveredmenu');
-            return;
-        }
-
-        setTimeout(function () {
-            try {
-                if ($li.is('li:hover') || $sidebar.is('sidebar:hover')) {
-                    return;
-                }
-            } catch(e) { /* Bypass because if IE8 */ };
-            $li.removeClass('hover');
-            $('#layout').removeClass('hoveredmenu');
-        }, 500);
-        _this.hovered = null;
-    };
-
-    Navigation.prototype.hoverElement = function ($li)  {
-        $('#layout').addClass('hoveredmenu');
-        $li.addClass('hover');
-        if ($li[0]) {
-            this.hovered = this.icinga.utils.getDomPath($li[0]);
-        } else {
-            this.hovered = null;
-        }
-    };
-
     Icinga.Behaviors.Navigation = Navigation;
 
-}) (Icinga, jQuery);
+})(Icinga, jQuery);

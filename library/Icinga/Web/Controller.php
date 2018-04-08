@@ -17,9 +17,18 @@ use Icinga\Web\Widget\SortBox;
  * This is the controller all modules should inherit from
  * We will flip code with the ModuleActionController as soon as a couple
  * of pending feature branches are merged back to the master.
+ *
+ * @property View $view
  */
 class Controller extends ModuleActionController
 {
+    /**
+     * Cache for page size configured via user preferences
+     *
+     * @var false|int
+     */
+    protected $userPageSize;
+
     /**
      * @see ActionController::init
      */
@@ -138,10 +147,32 @@ class Controller extends ModuleActionController
     {
         if (! $this->view->compact) {
             $this->view->limiter = new Limiter();
-            $this->view->limiter->setDefaultLimit($itemsPerPage);
+            $this->view->limiter->setDefaultLimit($this->getPageSize($itemsPerPage));
         }
 
         return $this;
+    }
+
+    /**
+     * Get the page size configured via user preferences or return the default value
+     *
+     * @param   int $default
+     *
+     * @return  int
+     */
+    protected function getPageSize($default)
+    {
+        if ($this->userPageSize === null) {
+            $user = $this->Auth()->getUser();
+            if ($user !== null) {
+                $pageSize = $user->getPreferences()->getValue('icingaweb', 'default_page_size', false);
+                $this->userPageSize = $pageSize !== false ? (int) $pageSize : false;
+            } else {
+                $this->userPageSize = false;
+            }
+        }
+
+        return $this->userPageSize !== false ? $this->userPageSize : $default;
     }
 
     /**
@@ -159,7 +190,7 @@ class Controller extends ModuleActionController
     protected function setupPaginationControl(QueryInterface $query, $itemsPerPage = 25, $pageNumber = 0)
     {
         $request = $this->getRequest();
-        $limit = $request->getParam('limit', $itemsPerPage);
+        $limit = $request->getParam('limit', $this->getPageSize($itemsPerPage));
         $page = $request->getParam('page', $pageNumber);
         $query->limit($limit, $page > 0 ? ($page - 1) * $limit : 0);
 

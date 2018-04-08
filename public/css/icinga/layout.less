@@ -37,18 +37,28 @@
 }
 
 #header-logo-container {
-  height: 2.667em;
-  margin: .1667em 0 .1667em .7em;
-  width: 100px;
+  background: inherit;
+  height: 6em;
+  padding: 1.25em;
+  width: 16em;
+  position: fixed;
+  left: 0;
+  margin-top: -3em;
 }
 
 #header-logo {
   background-image: url('../img/icinga-logo.svg');
-  background-position: left center;
+  background-position: center center;
   background-repeat: no-repeat;
   background-size: contain;
   display: block;
   height: 100%;
+  width: 100%;
+
+  &:focus {
+    opacity: .6;
+    outline: none;
+  }
 }
 
 #icinga-logo {
@@ -59,6 +69,10 @@
   height: 177px;
   margin-bottom: 2em;
   width: 100%;
+
+  &.invert {
+    background-image: url('../img/icinga-logo-big-dark.svg');
+  }
 }
 
 .ie8 {
@@ -117,7 +131,12 @@
 }
 
 // Mobile menu
+#layout.minimal-layout #sidebar {
+  background-color: @menu-bg-color;
+}
+
 #mobile-menu-toggle {
+  color: @menu-color;
   text-align: right;
 
   > button {
@@ -130,10 +149,6 @@
         -ms-appearance: none;
             appearance: none;
   }
-}
-
-#sidebar {
-  background-color: @gray-lighter;
 }
 
 .container,
@@ -224,5 +239,101 @@ html.no-js .controls > .tabs {
 
   &.warning {
     background-color: @color-notification-warning;
+  }
+}
+
+// Z-Index correction
+#main {
+  z-index: 1;
+}
+
+#sidebar {
+  z-index: 2;
+}
+
+// Collapsed sidebar
+#layout:not(.minimal-layout).sidebar-collapsed {
+  #header-logo-container {
+    height: 3.167em;
+    padding: 0.25em 0.125em;
+    width: 4em;
+  }
+
+  #header-logo {
+    background-image: url('../img/icinga-logo-compact.svg');
+  }
+
+  #main {
+    left: 3em;
+  }
+
+  #sidebar {
+    top: 2.25em;
+    width: 3em;
+  }
+
+  #open-sidebar {
+    display: inline;
+  }
+
+  #close-sidebar {
+    display: none;
+  }
+
+  #menu {
+    .badge {
+      display: none;
+    }
+
+    img.icon {
+      margin: 0 1.25em -.25em 0.25em;
+      font-size: 1.5em;
+    }
+
+    .nav-item {
+      white-space: nowrap;
+    }
+
+    .nav-item.no-icon > a {
+      padding-left: .75em;
+    }
+
+    .nav-level-1 > .nav-item i {
+      font-size: 1.5em;
+      margin-right: .5em;
+    }
+
+    > .search-control {
+      height: 3.333em;
+    }
+  }
+
+  #search {
+    padding-left: 3.75em;
+  }
+
+  #search:focus {
+    background-color: @menu-bg-color;
+    border-radius: 0 .25em .25em 0;
+    box-shadow: 0 0 .25em 0 rgba(0, 0, 0, .2);
+    color: @menu-color;
+    width: 20em;
+    position: fixed;
+    z-index: 1;
+  }
+
+  .search-input {
+    font-size: 1.25em;
+    padding-right: .625em;
+  }
+
+  .search-reset {
+    display: none;
+  }
+
+  .skip-links {
+    a, button {
+      width: 20em;
+    }
   }
 }

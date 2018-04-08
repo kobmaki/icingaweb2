@@ -27,6 +27,21 @@
          * @type {bool}
          */
         this.mobileMenu = false;
+
+        // detect currentLayout
+        var classList = $('#layout').attr('class').split(/\s+/);
+        var _this = this;
+        var matched;
+        $.each(classList, function(index, item) {
+            if (null !== (matched = item.match(/^([a-z]+)-layout$/))) {
+                var layout = matched[1];
+                if (layout !== 'fullscreen') {
+                    _this.currentLayout = layout;
+                    // Break loop
+                    return false;
+                }
+            }
+        });
     };
 
     Icinga.UI.prototype = {
@@ -354,6 +369,9 @@
         },
 
         refreshDebug: function () {
+            if (! this.debug) {
+                return;
+            }
 
             var size = this.getDefaultFontSize().toString();
             var winWidth = $( window ).width();
@@ -533,8 +551,10 @@
          * @param {object} e Event
          */
         closeMobileMenu: function(e) {
-            if (e.which === 13) {
+            var $search = $('#search');
+            if (e.which === 13 && $search.is(':focus')) {
                 $('#sidebar').removeClass('expanded');
+                $search.blur();
             }
         },
 
@@ -574,7 +594,7 @@
 
             if (typeof $container === 'undefined') {
                 var $header = $('#header');
-                var $headerLogo = $('#header-logo');
+                var $headerLogo = $('#header-logo-container');
                 var $main = $('#main');
                 var $search = $('#search');
                 var $sidebar = $('#sidebar');
@@ -590,8 +610,7 @@
                             display: 'none'
                         });
                         $main.css({
-                            top: $header.height() + $sidebar.outerHeight(),
-                            zIndex: 2
+                            top: $header.outerHeight() + $sidebar.outerHeight()
                         });
                         $sidebar
                             .on(
@@ -601,22 +620,22 @@
                             .prepend(
                                 $('<div id="mobile-menu-toggle"><button><i class="icon-menu"></i></button></div>')
                             );
-                        $search.on('keypress', this.closeMobileMenu);
+                        $(window).on('keypress', this.closeMobileMenu);
 
                         this.mobileMenu = true;
                     }
                 } else {
+                    $headerLogo.css({
+                        top: $header.css('height')
+                    });
                     $main.css({
-                        top: $header.css('height'),
-                        zIndex: ''
+                        top: $header.css('height')
                     });
-                    $sidebar.css({
-                        top: $header.css('height'),
-                        zIndex: ''
-                    });
-                    $header.css({
-                        height: $header.height() + 'px'
-                    });
+                    if (!! $headerLogo.length) {
+                        $sidebar.css({
+                            top: $headerLogo.offset().top + $headerLogo.outerHeight()
+                        });
+                    }
 
                     if (this.mobileMenu) {
                         $header.css({
@@ -652,7 +671,7 @@
                 var $controls = $(this);
                 var $fakeControls = $controls.next('.fake-controls');
                 $controls.css({
-                    top: $container.offset().top,
+                    top: $container.offsetParent().position().top,
                     width: $fakeControls.outerWidth()
                 });
                 $fakeControls.height($controls.height());

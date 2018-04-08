@@ -16,6 +16,7 @@ class Hostgroupsummary extends DataView
             'hosts_down_handled',
             'hosts_down_unhandled',
             'hosts_pending',
+            'hosts_severity',
             'hosts_total',
             'hosts_unreachable_handled',
             'hosts_unreachable_unhandled',
@@ -34,7 +35,7 @@ class Hostgroupsummary extends DataView
 
     public function getSearchColumns()
     {
-        return array('hostgroup_name', 'hostgroup_alias');
+        return array('hostgroup', 'hostgroup_alias');
     }
 
     public function getSortRules()
@@ -42,6 +43,13 @@ class Hostgroupsummary extends DataView
         return array(
             'hostgroup_alias' => array(
                 'order' => self::SORT_ASC
+            ),
+            'hosts_severity' => array(
+                'columns' => array(
+                    'hosts_severity',
+                    'hostgroup_alias ASC'
+                ),
+                'order' => self::SORT_DESC
             )
         );
     }

@@ -3,13 +3,16 @@
 
 namespace Icinga\Authentication\UserGroup;
 
+use Exception;
 use Icinga\Data\Filter\Filter;
+use Icinga\Data\Inspectable;
+use Icinga\Data\Inspection;
 use Icinga\Exception\NotFoundError;
 use Icinga\Repository\DbRepository;
 use Icinga\Repository\RepositoryQuery;
 use Icinga\User;
 
-class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterface
+class DbUserGroupBackend extends DbRepository implements Inspectable, UserGroupBackendInterface
 {
     /**
      * The query columns being provided
@@ -130,7 +133,7 @@ class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterfa
      * @param   string  $table
      * @param   array   $bind
      */
-    public function insert($table, array $bind)
+    public function insert($table, array $bind, array $types = array())
     {
         $bind['created_at'] = date('Y-m-d H:i:s');
         parent::insert($table, $bind);
@@ -143,7 +146,7 @@ class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterfa
      * @param   array   $bind
      * @param   Filter  $filter
      */
-    public function update($table, array $bind, Filter $filter = null)
+    public function update($table, array $bind, Filter $filter = null, array $types = array())
     {
         $bind['last_modified'] = date('Y-m-d H:i:s');
         parent::update($table, $bind, $filter);
@@ -299,5 +302,24 @@ class DbUserGroupBackend extends DbRepository implements UserGroupBackendInterfa
         }
 
         return $groupId;
+    }
+
+    /**
+     * Inspect this object to gain extended information about its health
+     *
+     * @return Inspection           The inspection result
+     */
+    public function inspect()
+    {
+        $insp = new Inspection('Db User Group Backend');
+        $insp->write($this->ds->inspect());
+
+        try {
+            $insp->write(sprintf('%s group(s)', $this->select()->count()));
+        } catch (Exception $e) {
+            $insp->error(sprintf('Query failed: %s', $e->getMessage()));
+        }
+
+        return $insp;
     }
 }

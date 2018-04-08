@@ -9,55 +9,95 @@
 
 @icon-width: 1.7em; // 1.5em width + 0.2em right margin
 
-#menu {
+#menu-container {
   height: 100%;
-  overflow: auto;
+  overflow: hidden;
+  position: relative;
 }
 
-#menu a {
-  &:focus {
-    color: @icinga-blue;
-    outline-offset: -3px;
-  }
+#menu {
+  background-color: @menu-bg-color;
+  box-shadow: inset -.5em 0 1em rgba(0, 0, 0, .3);
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: absolute;
+}
 
-  &:hover {
-    color: @icinga-blue;
-    text-decoration: none;
+#layout:not(.minimal-layout).sidebar-collapsed #menu {
+  min-width: 6em;
+  width: auto;
+}
+
+#layout:not(.minimal-layout) #menu {
+  // Space for the #toggle-sidebar button
+  &:after {
+    content: "";
+    display: block;
+    padding-bottom: 2.25em;
   }
 }
 
-#menu .active > a {
-  color: @icinga-blue;
+#menu .nav-item {
+  vertical-align: middle;
+
+  > a {
+    &:focus {
+      outline: none;
+    }
+
+    &:hover {
+      text-decoration: none;
+    }
+  }
+}
+
+#layout:not(.sidebar-collapsed) #menu .nav-item > a {
+  // Respect overflowing content
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#layout:not(.minimal-layout).sidebar-collapsed #menu .nav-level-1 > .nav-item > a {
+  // Clip overflowing content
+  overflow: hidden;
+  width: 4em;
 }
 
 #menu .nav-level-1 > .nav-item {
-  border-left: 5px solid transparent;
   line-height: 2.167em; // 26 px
+  color: @menu-color;
 
   &.active {
-    > a > .badge {
-      display: none;
+    > a {
+      font-weight: @font-weight-bold;
+      letter-spacing: .02em;
+
+      > .badge {
+        display: none;
+      }
     }
 
-    .nav-level-2 > li {
-      // Expand menu if active
-      display: block;
-    }
-
-    background-color: @body-bg-color;
-    border-color: @icinga-blue;
+    background-color: @menu-active-bg-color;
   }
 
   &.no-icon > a {
-    margin-left: @icon-width;
+    padding-left: @icon-width + .75em;
   }
 
   > a {
-    padding: 0.5em 0.5em; // 6px 6px
+    padding: 0.5em 0.5em 0.5em .75em;
+
+    &:focus, &:hover {
+      color: @menu-highlight-color;
+    }
   }
 
-  > a:active ~ .nav-level-2 > li {
-    display: block;
+  // Balance icon weight for non active menu items
+  &:not(.active) > a > i {
+    opacity: .8;
   }
 }
 
@@ -65,11 +105,49 @@
   // Collapse menu by default
   display: none;
   line-height: 1.833em; // 22px
-  margin-left: @icon-width;
+  padding-left: @icon-width;
 
   > a {
+    color: @menu-2ndlvl-color;
     font-size: @font-size-small;
-    padding: 0.364em 0.545em; // 4px 6px
+    padding: 0.364em 0.545em 0.364em .8em;
+
+    &:hover, &:focus {
+      color: @menu-2ndlvl-highlight-color;
+    }
+  }
+
+  &.active {
+    background-color: @menu-highlight-color;
+    overflow: hidden;
+    position: relative;
+
+    > a {
+      &:focus, &:hover {
+        opacity: .6;
+      }
+    }
+  }
+
+  // Little caret on active level-2 item
+  &.active:after {
+    background-color: @body-bg-color;
+    box-shadow: 0 0 1em 0 rgba(0,0,0,.6);
+    content: "";
+    display: block;
+    height: 1.25em;
+    width: 1.25em;
+    -webkit-transform: rotate(45deg);
+       -moz-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+            transform: rotate(45deg);
+    position: absolute;
+    top: .5em;
+    right: -.75em;
+  }
+
+  &.active > a {
+    color: @menu-color;
   }
 }
 
@@ -78,71 +156,99 @@
   display: block;
 }
 
+#layout:not(.sidebar-collapsed) {
+  #menu .nav-level-1 > .nav-item {
+    &.active {
+      .nav-level-2 > li {
+        // Expand menu if active
+        display: block;
+      }
+    }
+  }
+}
+
 #menu img.icon {
   line-height: 1;
-  margin: 0 0.2em;
+  margin: 0 0.5em -.05em 0.25em;
   width: 1em;
 }
 
-#menu .user-nav-item {
-  background-color: @gray-light;
+#menu img[src*="/img/icons/"] {
+  &:not([src$="tux.png"]):not([src$="win.png"]):not([src$="_white.png"]) {
+    -webkit-filter: invert(100%);
+    -moz-filter: invert(100%);
+    -ms-filter: invert(100%);
+    filter: invert(100%);
+  }
+}
+
+.nav-item:hover img.icon {
+  opacity: .6;
 }
 
 #menu input.search {
-  background: transparent url('../img/icons/search.png') no-repeat 0.7em center;
+  background: transparent url('../img/icons/search_white.png') no-repeat 0.7em center;
   background-size: 1em auto;
   border: none;
   border-left: 5px solid transparent;
+  color: @menu-color;
   line-height: 2.167em;
   padding-left: @icon-width + 0.5em;
   width: 100%;
 
   &.active {
-    background-color: @body-bg-color;
-    border-color: @icinga-blue;
+    background-color: @menu-active-bg-color;
   }
 }
 
 // Badge offset correction
-
 #menu > nav > .nav-level-1 > .badge-nav-item > a > .badge {
   margin-top: 0.2em;
 }
 
 #menu .nav-level-2 > .badge-nav-item > a > .badge {
   margin-top: 0.2em;
+  margin-right: .5em
 }
 
 // Hovered menu
-
-#menu .nav-level-1 > .nav-item.hover {
-  position: relative;
-
-  &:before {
-    border: 0.5em solid rgba(0, 0, 0, 0);
-    border-right-color: @text-color;
-    content: "";
-    position: absolute;
-    right: 0;
-    top: 30%;
-  }
-
+#layout:not(.minimal-layout).sidebar-collapsed #menu .nav-level-1 > .nav-item.hover,
+#layout:not(.minimal-layout) #menu .nav-level-1 > .nav-item:not(.active).hover {
   > .nav-level-2 {
-    background-color: @text-color;
-    color: @text-color-inverted;
-    left: 100%;
+    background-color: @menu-flyout-bg-color;
+    border: 1px solid @gray-light;
+    border-radius: .25em;
+    box-shadow: 0 0 1em 0 rgba(0,0,0,.3);
     padding: @vertical-padding 0;
-    position: absolute;
-    top: 0;
     width: 14em;
+    position: fixed;
 
     > .nav-item {
       display: block;
-      margin-left: 0.5em;
+      padding-left: 0;
+      position: relative;
 
-      > a:hover {
-        color: @text-color-inverted;
-        text-decoration: underline;
+      > a {
+        color: @menu-flyout-color;
+        padding-left: 1.5em;
+
+        &:hover, &:focus {
+          background-color: @tr-active-color;
+        }
+      }
+
+      &.active > a {
+        color: @menu-color;
+
+        &:focus, &:hover {
+          background-color: @menu-highlight-color;
+          opacity: .6;
+        }
+      }
+
+      // Hide activity caret when displayed as flyout
+      &:after {
+        display: none;
       }
     }
   }
@@ -150,19 +256,25 @@
   > a > .badge {
     display: none;
   }
+
+  img.icon {
+    opacity: .6;
+  }
 }
 
-#layout.hoveredmenu {
-  #main {
-    z-index: 2;
+#layout:not(.minimal-layout) #menu .nav-level-1 > .nav-item:not(.active).hover {
+  > .nav-level-2 {
+    // Position relative to parent
+    margin-left: 16em;
+    margin-top: -3.167em;
   }
+}
 
-  #sidebar {
-    z-index: 3;
-  }
-
-  #menu {
-    overflow: visible;
+#layout:not(.minimal-layout).sidebar-collapsed #menu .nav-level-1 > .nav-item.hover {
+  > .nav-level-2 {
+    // Position relative to parent
+    margin-left: 4em;
+    margin-top: -3.333em;
   }
 }
 
@@ -207,18 +319,20 @@
 .search-reset {
   background: none;
   border: 0;
+  color: @menu-color;
   cursor: pointer;
   display: none;
   height: 100%;
   padding: 0;
+  user-select: none;
   position: absolute;
   right: 0;
   top: 0;
-  user-select: none;
-}
 
-.search-reset:focus {
-  outline: 0;
+  &:focus, &:hover {
+    color: @menu-highlight-color;
+    outline: none;
+  }
 }
 
 // Override forms.less
@@ -266,4 +380,41 @@ input[type=text].search-input {
     opacity: 1;
     transform: none;
   }
+}
+
+// Toggle sidebar button
+#toggle-sidebar {
+  // Reset button styles
+  background: none;
+  border: none;
+  padding: 0;
+  color: @gray-light;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+
+  i {
+    background-color: @body-bg-color;
+    border-radius: .25em 0 0 .25em;
+    font-size: 1.125em;
+    width: 2em;
+  }
+
+  &:focus {
+    outline: none;
+  }
+
+  &:hover, &:focus {
+    i {
+      color: @menu-highlight-color;
+    }
+  }
+}
+
+#layout.minimal-layout #toggle-sidebar {
+  display: none;
+}
+
+#open-sidebar {
+  display: none;
 }

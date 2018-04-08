@@ -3,18 +3,23 @@
 
 namespace Icinga\Authentication\UserGroup;
 
+use Exception;
 use Icinga\Authentication\User\UserBackend;
 use Icinga\Authentication\User\LdapUserBackend;
 use Icinga\Application\Logger;
 use Icinga\Data\ConfigObject;
+use Icinga\Data\Inspectable;
+use Icinga\Data\Inspection;
+use Icinga\Exception\AuthenticationException;
 use Icinga\Exception\ConfigurationError;
 use Icinga\Exception\ProgrammingError;
 use Icinga\Protocol\Ldap\LdapException;
+use Icinga\Protocol\Ldap\LdapUtils;
 use Icinga\Repository\LdapRepository;
 use Icinga\Repository\RepositoryQuery;
 use Icinga\User;
 
-class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInterface
+class LdapUserGroupBackend extends LdapRepository implements Inspectable, UserGroupBackendInterface
 {
     /**
      * The user backend being associated with this user group backend
@@ -438,6 +443,11 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
     /**
      * Return whether the attribute name where to find a group's member holds ambiguous values
      *
+     * This tries to detect if the member attribute of groups contain:
+     *
+     *  full DN -> distinguished name of another object
+     *  other   -> ambiguous field referencing the member by userNameAttribute
+     *
      * @return  bool
      *
      * @throws  ProgrammingError    In case either $this->groupClass or $this->groupMemberAttribute
@@ -463,7 +473,8 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
                 ->setUnfoldAttribute($this->groupMemberAttribute)
                 ->setBase($this->groupBaseDn)
                 ->fetchOne();
-            $this->ambiguousMemberAttribute = !$this->isRelatedDn($sampleValue);
+
+            $this->ambiguousMemberAttribute = ! LdapUtils::isDn($sampleValue);
         }
 
         return $this->ambiguousMemberAttribute;
@@ -676,7 +687,7 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
         $domain = $this->getDomain();
 
         if ($domain !== null) {
-            if (! $user->hasDomain() || strtolower($user->getDomain()) !== $domain) {
+            if (! $user->hasDomain() || strtolower($user->getDomain()) !== strtolower($domain)) {
                 return array();
             }
 
@@ -835,5 +846,73 @@ class LdapUserGroupBackend extends LdapRepository implements UserGroupBackendInt
             'group_member_attribute'    => 'member',
             'nested_group_search'       => '0'
         ));
+    }
+
+    /**
+     * Inspect if this LDAP User Group Backend is working as expected by probing the backend
+     *
+     * Try to bind to the backend and fetch a single group to check if:
+     * <ul>
+     *  <li>Connection credentials are correct and the bind is possible</li>
+     *  <li>At least one group exists</li>
+     *  <li>The specified groupClass has the property specified by groupNameAttribute</li>
+     * </ul>
+     *
+     * @return  Inspection  Inspection result
+     */
+    public function inspect()
+    {
+        $result = new Inspection('Ldap User Group Backend');
+
+        // inspect the used connection to get more diagnostic info in case the connection is not working
+        $result->write($this->ds->inspect());
+
+        try {
+            try {
+                $groupQuery = $this->ds
+                    ->select()
+                    ->from($this->groupClass, array($this->groupNameAttribute))
+                    ->setBase($this->groupBaseDn);
+
+                if ($this->groupFilter) {
+                    $groupQuery->setNativeFilter($this->groupFilter);
+                }
+
+                $res = $groupQuery->fetchRow();
+            } catch (LdapException $e) {
+                throw new AuthenticationException('Connection not possible', $e);
+            }
+
+            $result->write('Searching for: ' . sprintf(
+                'objectClass "%s" in DN "%s" (Filter: %s)',
+                $this->groupClass,
+                $this->groupBaseDn ?: $this->ds->getDn(),
+                $this->groupFilter ?: 'None'
+            ));
+
+            if ($res === false) {
+                throw new AuthenticationException('Error, no groups found in backend');
+            }
+
+            $result->write(sprintf('%d groups found in backend', $groupQuery->count()));
+
+            if (! isset($res->{$this->groupNameAttribute})) {
+                throw new AuthenticationException(
+                    'GroupNameAttribute "%s" not existing in objectClass "%s"',
+                    $this->groupNameAttribute,
+                    $this->groupClass
+                );
+            }
+        } catch (AuthenticationException $e) {
+            if (($previous = $e->getPrevious()) !== null) {
+                $result->error($previous->getMessage());
+            } else {
+                $result->error($e->getMessage());
+            }
+        } catch (Exception $e) {
+            $result->error(sprintf('Unable to validate backend: %s', $e->getMessage()));
+        }
+
+        return $result;
     }
 }

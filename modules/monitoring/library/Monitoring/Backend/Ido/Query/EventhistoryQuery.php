@@ -28,11 +28,7 @@ class EventhistoryQuery extends IdoQuery
      */
     protected $columnMap = array(
         'eventhistory' => array(
-            'cnt_notification'      => "SUM(CASE eh.type WHEN 'notify' THEN 1 ELSE 0 END)",
-            'cnt_hard_state'        => "SUM(CASE eh.type WHEN 'hard_state' THEN 1 ELSE 0 END)",
-            'cnt_soft_state'        => "SUM(CASE eh.type WHEN 'hard_state' THEN 1 ELSE 0 END)",
-            'cnt_downtime_start'    => "SUM(CASE eh.type WHEN 'dt_start' THEN 1 ELSE 0 END)",
-            'cnt_downtime_end'      => "SUM(CASE eh.type WHEN 'dt_end' THEN 1 ELSE 0 END)",
+            'id'                    => 'eh.id',
             'host_name'             => 'eh.host_name',
             'service_description'   => 'eh.service_description',
             'object_type'           => 'eh.object_type',
@@ -51,6 +47,7 @@ class EventhistoryQuery extends IdoQuery
     protected function joinBaseTables()
     {
         $columns = array(
+            'id',
             'timestamp',
             'output',
             'type',

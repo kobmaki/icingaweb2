@@ -2,6 +2,7 @@
 /* Icinga Web 2 | (c) 2013 Icinga Development Team | GPLv2+ */
 
 use Icinga\Web\Dom\DomNodeIterator;
+use Icinga\Module\Monitoring\Web\Helper\PluginOutputPurifier;
 
 /**
  * Plugin output renderer
@@ -28,6 +29,8 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
         '~(\[|\()WARNING(\]|\))~',
         '~(\[|\()CRITICAL(\]|\))~',
         '~(\[|\()UNKNOWN(\]|\))~',
+        '~(\[|\()UP(\]|\))~',
+        '~(\[|\()DOWN(\]|\))~',
         '~\@{6,}~'
     );
 
@@ -44,7 +47,33 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
         '<span class="state-warning">$1WARNING$2</span>',
         '<span class="state-critical">$1CRITICAL$2</span>',
         '<span class="state-unknown">$1UNKNOWN$2</span>',
+        '<span class="state-up">$1UP$2</span>',
+        '<span class="state-down">$1DOWN$2</span>',
         '@@@@@@',
+    );
+
+    /**
+     * Patterns to be replaced in html plugin output
+     *
+     * @var array
+     */
+    protected static $htmlPatterns = array(
+        '~\\\n~',
+        '~\\\t~',
+        '~\\\n\\\n~',
+        '~<table~'
+    );
+
+    /**
+     * Replacements for $htmlPatterns
+     *
+     * @var array
+     */
+    protected static $htmlReplacements = array(
+        "\n",
+        "\t",
+        "\n",
+        '<table style="font-size: 0.75em"'
     );
 
     /**
@@ -64,9 +93,9 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
         if (preg_match('~<[^>]*["/\'][^>]*>~', $output)) {
             // HTML
             $output = preg_replace(
-                '~<table~',
-                '<table style="font-size: 0.75em"',
-                $this->getPurifier()->purify($output)
+                self::$htmlPatterns,
+                self::$htmlReplacements,
+                PluginOutputPurifier::process($output)
             );
             $isHtml = true;
         } else {
@@ -101,7 +130,7 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
      */
     protected function processHtml($html)
     {
-        $pattern = '/[([](OK|WARNING|CRITICAL|UNKNOWN)[)\]]/';
+        $pattern = '/[([](OK|WARNING|CRITICAL|UNKNOWN|UP|DOWN)[)\]]/';
         $doc = new DOMDocument();
         $doc->loadXML('<div>' . $html . '</div>', LIBXML_NOERROR | LIBXML_NOWARNING);
         $dom = new RecursiveIteratorIterator(new DomNodeIterator($doc), RecursiveIteratorIterator::SELF_FIRST);
@@ -147,35 +176,5 @@ class Zend_View_Helper_PluginOutput extends Zend_View_Helper_Abstract
         }
 
         return substr($doc->saveHTML(), 5, -7);
-    }
-
-    /**
-     * Initialize and return self::$purifier
-     *
-     * @return HTMLPurifier
-     */
-    protected function getPurifier()
-    {
-        if (self::$purifier === null) {
-            require_once 'HTMLPurifier/Bootstrap.php';
-            require_once 'HTMLPurifier.php';
-            require_once 'HTMLPurifier.autoload.php';
-
-            $config = HTMLPurifier_Config::createDefault();
-            $config->set('Core.EscapeNonASCIICharacters', true);
-            $config->set('HTML.Allowed', 'p,br,b,a[href|target],i,table,tr,th[colspan],td[colspan],div,*[class]');
-            $config->set('Attr.AllowedFrameTargets', array('_blank'));
-            // This avoids permission problems:
-            // $config->set('Core.DefinitionCache', null);
-            $config->set('Cache.DefinitionImpl', null);
-            // TODO: Use a cache directory:
-            // $config->set('Cache.SerializerPath', '/var/spool/whatever');
-
-            // $config->set('URI.Base', 'http://www.example.com');
-            // $config->set('URI.MakeAbsolute', true);
-            // $config->set('AutoFormat.AutoParagraph', true);
-            self::$purifier = new HTMLPurifier($config);
-        }
-        return self::$purifier;
     }
 }

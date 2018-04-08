@@ -3,6 +3,7 @@
 
 namespace Icinga\Controllers;
 
+use Icinga\Exception\IcingaException;
 use Zend_Controller_Plugin_ErrorHandler;
 use Icinga\Application\Icinga;
 use Icinga\Application\Logger;
@@ -52,10 +53,10 @@ class ErrorController extends ActionController
                 $path = preg_split('~/~', $path);
                 $path = array_shift($path);
                 $this->getResponse()->setHttpResponseCode(404);
-                $this->view->message = $this->translate('Page not found.');
+                $this->view->messages = array($this->translate('Page not found.'));
                 if ($isAuthenticated) {
                     if ($modules->hasInstalled($path) && ! $modules->hasEnabled($path)) {
-                        $this->view->message .= ' ' . sprintf(
+                        $this->view->messages[0] .= ' ' . sprintf(
                             $this->translate('Enabling the "%s" module might help!'),
                             $path
                         );
@@ -83,12 +84,25 @@ class ErrorController extends ActionController
                         break;
                     default:
                         $this->getResponse()->setHttpResponseCode(500);
-                        Logger::error("%s\n%s", $exception, $exception->getTraceAsString());
+                        Logger::error("%s\n%s", $exception, IcingaException::getConfidentialTraceAsString($exception));
                         break;
                 }
-                $this->view->message = $exception->getMessage();
+
+                $this->view->messages = array();
+
                 if ($this->getInvokeArg('displayExceptions')) {
-                    $this->view->stackTrace = $exception->getTraceAsString();
+                    $this->view->stackTraces = array();
+
+                    do {
+                        $this->view->messages[] = $exception->getMessage();
+                        $this->view->stackTraces[] = IcingaException::getConfidentialTraceAsString($exception);
+                        $exception = $exception->getPrevious();
+                    } while ($exception !== null);
+                } else {
+                    do {
+                        $this->view->messages[] = $exception->getMessage();
+                        $exception = $exception->getPrevious();
+                    } while ($exception !== null);
                 }
 
                 break;
@@ -96,7 +110,7 @@ class ErrorController extends ActionController
 
         if ($this->getRequest()->isApiRequest()) {
             $this->getResponse()->json()
-                ->setErrorMessage($this->view->message)
+                ->setErrorMessage($this->view->messages[0])
                 ->sendResponse();
         }
 

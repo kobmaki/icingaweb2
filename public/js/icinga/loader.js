@@ -30,7 +30,15 @@
 
         this.iconCache = {};
 
+        /**
+         * Whether auto-refresh is enabled
+         */
         this.autorefreshEnabled = true;
+
+        /**
+         * Whether auto-refresh is suspended due to visibility of page
+         */
+        this.autorefreshSuspended = false;
     };
 
     Icinga.Loader.prototype = {
@@ -209,13 +217,17 @@
 
         autorefresh: function () {
             var _this = this;
-            if (_this.autorefreshEnabled !== true) {
-                return;
-            }
 
             $('.container').filter(this.filterAutorefreshingContainers).each(function (idx, el) {
                 var $el = $(el);
                 var id = $el.attr('id');
+
+                // Always request application-state
+                if (id !== 'application-state' && (! _this.autorefreshEnabled || _this.autorefreshSuspended)) {
+                    // Continue
+                    return true;
+                }
+
                 if (typeof _this.requests[id] !== 'undefined') {
                     _this.icinga.logger.debug('No refresh, request pending for ', id);
                     return;
@@ -866,7 +878,7 @@
             }
 
             if (scrollPos !== false) {
-                $container.scrollTop(scrollPos);
+                setTimeout($container.scrollTop.bind($container), 0, scrollPos);
             }
             var icinga = this.icinga;
             //icinga.events.applyHandlers($container);

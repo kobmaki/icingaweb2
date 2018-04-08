@@ -528,7 +528,9 @@ class Module
     {
         $this->launchConfigScript();
         $files = $this->cssFiles;
-        $files[] = $this->getCssFilename();
+        if (file_exists($this->getCssFilename())) {
+            $files[] = $this->getCssFilename();
+        }
         return $files;
     }
 
@@ -874,9 +876,13 @@ class Module
             'urlParams' => array('name' => $this->getName()),
             'label'     => 'Module: ' . $this->getName()
         ));
-        foreach ($this->configTabs as $name => $config) {
-            $tabs->add($name, $config);
+
+        if ($this->app->getModuleManager()->hasEnabled($this->name)) {
+            foreach ($this->configTabs as $name => $config) {
+                $tabs->add($name, $config);
+            }
         }
+
         return $tabs;
     }
 

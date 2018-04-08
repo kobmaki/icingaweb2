@@ -96,7 +96,10 @@ class ConfigCommand extends Command
      *
      *  --path=<urlpath>                    The URL path to Icinga Web 2 [/icingaweb2]
      *
-     *  --root|--document-root=<directory>  The directory from which the webserver will serve files [/path/to/icingaweb2/public]
+     *  --root|--document-root=<directory>  The directory from which the webserver will serve files
+     *                                      [/path/to/icingaweb2/public]
+     *
+     *  --fpm-uri=<uri>                     Address or path where to pass requests to FPM [127.0.0.1:9000]
      *
      *  --config=<directory>                Path to Icinga Web 2's configuration files [/etc/icingaweb2]
      *
@@ -106,11 +109,17 @@ class ConfigCommand extends Command
      *
      *  icingacli setup config webserver apache
      *
-     *  icingacli setup config webserver apache --path=/icingaweb2 --document-root=/usr/share/icingaweb2/public --config=/etc/icingaweb2
+     *  icingacli setup config webserver apache \
+     *    --path=/icingaweb2 \
+     *    --document-root=/usr/share/icingaweb2/public \
+     *    --config=/etc/icingaweb2
      *
-     *  icingacli setup config webserver apache --file=/etc/apache2/conf.d/icingaweb2.conf
+     *  icingacli setup config webserver apache \
+     *    --file=/etc/apache2/conf.d/icingaweb2.conf
      *
-     *  icingacli setup config webserver nginx
+     *  icingacli setup config webserver nginx \
+     *    --root=/usr/share/icingaweb2/public \
+     *    --fpm-uri=unix:/var/run/php5-fpm.sock
      */
     public function webserverAction()
     {
@@ -140,10 +149,17 @@ class ConfigCommand extends Command
                 'The argument --config expects a path to Icinga Web 2\'s configuration files'
             ));
         }
+        $fpmUri = trim($this->params->get('fpm-uri', $webserver->getFpmUri()));
+        if (empty($fpmUri)) {
+            $this->fail($this->translate(
+                'The argument --fpm-uri expects an address or path where to pass requests to FPM'
+            ));
+        }
         $webserver
             ->setDocumentRoot($documentRoot)
             ->setConfigDir($configDir)
-            ->setUrlPath($urlPath);
+            ->setUrlPath($urlPath)
+            ->setFpmUri($fpmUri);
         $config = $webserver->generate() . "\n";
         if (($file = $this->params->get('file')) !== null) {
             if (file_exists($file) === true) {

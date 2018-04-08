@@ -23,6 +23,20 @@ class LdapBackendForm extends Form
     protected $resources;
 
     /**
+     * Default values for the form elements
+     *
+     * @var string[]
+     */
+    protected $suggestions = array();
+
+    /**
+     * Cache for {@link getLdapCapabilities()}
+     *
+     * @var LdapCapabilities
+     */
+    protected $ldapCapabilities;
+
+    /**
      * Initialize this form
      */
     public function init()
@@ -60,7 +74,8 @@ class LdapBackendForm extends Form
                 'label'         => $this->translate('Backend Name'),
                 'description'   => $this->translate(
                     'The name of this authentication provider that is used to differentiate it from others.'
-                )
+                ),
+                'value'         => $this->getSuggestion('name')
             )
         );
         $this->addElement(
@@ -74,12 +89,11 @@ class LdapBackendForm extends Form
                 ),
                 'multiOptions'  => !empty($this->resources)
                     ? array_combine($this->resources, $this->resources)
-                    : array()
+                    : array(),
+                'value'         => $this->getSuggestion('resource')
             )
         );
 
-        $baseDn = null;
-        $hasAdOid = false;
         if (! $isAd && !empty($this->resources)) {
             $this->addElement(
                 'button',
@@ -100,26 +114,9 @@ class LdapBackendForm extends Form
                     'formnovalidate'    => 'formnovalidate'
                 )
             );
-
-            if ($this->getElement('discovery_btn')->isChecked()) {
-                $connection = ResourceFactory::create(
-                    isset($formData['resource']) ? $formData['resource'] : reset($this->resources)
-                );
-
-                try {
-                    $capabilities = $connection->bind()->getCapabilities();
-                    $baseDn = $capabilities->getDefaultNamingContext();
-                    $hasAdOid = $capabilities->isActiveDirectory();
-                } catch (Exception $e) {
-                    $this->warning(sprintf(
-                        $this->translate('Failed to discover the chosen LDAP connection: %s'),
-                        $e->getMessage()
-                    ));
-                }
-            }
         }
 
-        if ($isAd || $hasAdOid) {
+        if ($isAd) {
             // ActiveDirectory defaults
             $userClass = 'user';
             $filter = '!(objectClass=computer)';
@@ -141,7 +138,7 @@ class LdapBackendForm extends Form
                 'disabled'          => $isAd ?: null,
                 'label'             => $this->translate('LDAP User Object Class'),
                 'description'       => $this->translate('The object class used for storing users on the LDAP server.'),
-                'value'             => $userClass
+                'value'             => $this->getSuggestion('user_class', $userClass)
             )
         );
         $this->addElement(
@@ -150,7 +147,7 @@ class LdapBackendForm extends Form
             array(
                 'preserveDefault'   => true,
                 'allowEmpty'        => true,
-                'value'             => $filter,
+                'value'             => $this->getSuggestion('filter', $filter),
                 'label'             => $this->translate('LDAP Filter'),
                 'description'       => $this->translate(
                     'An additional filter to use when looking up users using the specified connection. '
@@ -193,7 +190,7 @@ class LdapBackendForm extends Form
                 'description'       => $this->translate(
                     'The attribute name used for storing the user name on the LDAP server.'
                 ),
-                'value'             => $userNameAttribute
+                'value'             => $this->getSuggestion('user_name_attribute', $userNameAttribute)
             )
         );
         $this->addElement(
@@ -201,7 +198,7 @@ class LdapBackendForm extends Form
             'backend',
             array(
                 'disabled'  => true,
-                'value'     => $isAd ? 'msldap' : 'ldap'
+                'value'     => $this->getSuggestion('backend', $isAd ? 'msldap' : 'ldap')
             )
         );
         $this->addElement(
@@ -215,7 +212,7 @@ class LdapBackendForm extends Form
                     'The path where users can be found on the LDAP server. Leave ' .
                     'empty to select all users available using the specified connection.'
                 ),
-                'value'             => $baseDn
+                'value'             => $this->getSuggestion('base_dn')
             )
         );
 
@@ -233,7 +230,8 @@ class LdapBackendForm extends Form
                     . ' If your LDAP backend holds usernames with a domain part or if it is not necessary in your setup'
                     . ' to authenticate users based on their domains, leave this field empty.'
                 ),
-                'preserveDefault' => true
+                'preserveDefault' => true,
+                'value'         => $this->getSuggestion('domain')
             )
         );
 
@@ -256,38 +254,96 @@ class LdapBackendForm extends Form
                 'formnovalidate'    => 'formnovalidate'
             )
         );
+    }
 
-        if ($this->getElement('btn_discover_domain')->isChecked() && isset($formData['resource'])) {
-            $this->populateDomain(ResourceFactory::create($formData['resource']));
+    public function isValidPartial(array $formData)
+    {
+        $isAd = isset($formData['type']) && $formData['type'] === 'msldap';
+        $baseDn = null;
+        $hasAdOid = false;
+        $discoverySuccessful = false;
+
+        if (! $isAd && ! empty($this->resources) && isset($formData['discovery_btn'])
+            && $formData['discovery_btn'] === 'discovery_btn') {
+            $discoverySuccessful = true;
+            try {
+                $capabilities = $this->getLdapCapabilities($formData);
+                $baseDn = $capabilities->getDefaultNamingContext();
+                $hasAdOid = $capabilities->isActiveDirectory();
+            } catch (Exception $e) {
+                $this->warning(sprintf(
+                    $this->translate('Failed to discover the chosen LDAP connection: %s'),
+                    $e->getMessage()
+                ));
+                $discoverySuccessful = false;
+            }
         }
+
+        if ($discoverySuccessful) {
+            if ($isAd || $hasAdOid) {
+                // ActiveDirectory defaults
+                $userClass = 'user';
+                $filter = '!(objectClass=computer)';
+                $userNameAttribute = 'sAMAccountName';
+            } else {
+                // OpenLDAP defaults
+                $userClass = 'inetOrgPerson';
+                $filter = null;
+                $userNameAttribute = 'uid';
+            }
+
+            $formData['user_class'] = $userClass;
+
+            if (! isset($formData['filter']) || $formData['filter'] === '') {
+                $formData['filter'] = $filter;
+            }
+
+            $formData['user_name_attribute'] = $userNameAttribute;
+
+            if ($baseDn !== null && (! isset($formData['base_dn']) || $formData['base_dn'] === '')) {
+                $formData['base_dn'] = $baseDn;
+            }
+        }
+
+        if (isset($formData['btn_discover_domain']) && $formData['btn_discover_domain'] === 'discovery_btn') {
+            try {
+                $formData['domain'] = $this->discoverDomain($formData);
+            } catch (LdapException $e) {
+                $this->error($e->getMessage());
+            }
+        }
+
+        return parent::isValidPartial($formData);
     }
 
     /**
-     * Discover the domain the LDAP server is responsible for and fill it in the form
+     * Get the LDAP capabilities of either the resource specified by the user or the default one
      *
-     * @param   LdapConnection  $connection
+     * @param   string[]    $formData
+     *
+     * @return  LdapCapabilities
      */
-    public function populateDomain(LdapConnection $connection)
+    protected function getLdapCapabilities(array $formData)
     {
-        try {
-            $domain = $this->discoverDomain($connection);
-        } catch (LdapException $e) {
-            $this->_elements['btn_discover_domain']->addError($e->getMessage());
+        if ($this->ldapCapabilities === null) {
+            $this->ldapCapabilities = ResourceFactory::create(
+                isset($formData['resource']) ? $formData['resource'] : reset($this->resources)
+            )->bind()->getCapabilities();
         }
 
-        $this->_elements['domain']->setValue($domain);
+        return $this->ldapCapabilities;
     }
 
     /**
      * Discover the domain the LDAP server is responsible for
      *
-     * @param   LdapConnection  $connection
+     * @param   string[]    $formData
      *
      * @return  string
      */
-    protected function discoverDomain(LdapConnection $connection)
+    protected function discoverDomain(array $formData)
     {
-        $cap = LdapCapabilities::discoverCapabilities($connection);
+        $cap = $this->getLdapCapabilities($formData);
 
         if ($cap->isActiveDirectory()) {
             $netBiosName = $cap->getNetBiosName();
@@ -317,5 +373,42 @@ class LdapBackendForm extends Form
                 return implode('.', $splitMatches[1]);
             }
         }
+    }
+
+    /**
+     * Get the default values for the form elements
+     *
+     * @return string[]
+     */
+    public function getSuggestions()
+    {
+        return $this->suggestions;
+    }
+
+    /**
+     * Get the default value for the given form element or the given default
+     *
+     * @param   string  $element
+     * @param   string  $default
+     *
+     * @return  string
+     */
+    public function getSuggestion($element, $default = null)
+    {
+        return isset($this->suggestions[$element]) ? $this->suggestions[$element] : $default;
+    }
+
+    /**
+     * Set the default values for the form elements
+     *
+     * @param string[] $suggestions
+     *
+     * @return $this
+     */
+    public function setSuggestions(array $suggestions)
+    {
+        $this->suggestions = $suggestions;
+
+        return $this;
     }
 }

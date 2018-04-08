@@ -9,10 +9,8 @@ use LogicException;
 use Icinga\Application\Modules\Manager as ModuleManager;
 use Icinga\Authentication\User\UserBackend;
 use Icinga\Data\ConfigObject;
-use Icinga\Data\ResourceFactory;
 use Icinga\Exception\ConfigurationError;
 use Icinga\Exception\NotReadableError;
-use Icinga\Application\Logger;
 use Icinga\Util\Translator;
 use Icinga\Exception\IcingaException;
 
@@ -78,6 +76,13 @@ abstract class ApplicationBootstrap
     protected $configDir;
 
     /**
+     * Common storage directory
+     *
+     * @var string
+     */
+    protected $storageDir;
+
+    /**
      * Icinga class loader
      *
      * @var ClassLoader
@@ -122,10 +127,11 @@ abstract class ApplicationBootstrap
     /**
      * Constructor
      *
-     * @param string $baseDir   Icinga Web 2 base directory
-     * @param string $configDir Path to Icinga Web 2's configuration files
+     * @param string $baseDir       Icinga Web 2 base directory
+     * @param string $configDir     Path to Icinga Web 2's configuration files
+     * @param string $storageDir    Path to Icinga Web 2's stored files
      */
-    protected function __construct($baseDir = null, $configDir = null)
+    protected function __construct($baseDir = null, $configDir = null, $storageDir = null)
     {
         if ($baseDir === null) {
             $baseDir = dirname($this->getBootstrapDirectory());
@@ -133,7 +139,11 @@ abstract class ApplicationBootstrap
         $this->baseDir = $baseDir;
         $this->appDir = $baseDir . '/application';
         $this->vendorDir = $baseDir . '/library/vendor';
-        $this->libDir = realpath(__DIR__ . '/../..');
+        if (substr(__DIR__, 0, 8) === 'phar:///') {
+            $this->libDir = dirname(dirname(__DIR__));
+        } else {
+            $this->libDir = realpath(__DIR__ . '/../..');
+        }
 
         $this->setupAutoloader();
 
@@ -147,6 +157,17 @@ abstract class ApplicationBootstrap
         }
         $canonical = realpath($configDir);
         $this->configDir = $canonical ? $canonical : $configDir;
+
+        if ($storageDir === null) {
+            $storageDir = getenv('ICINGAWEB_STORAGEDIR');
+            if ($storageDir === false) {
+                $storageDir = Platform::isWindows()
+                    ? $baseDir . '/storage'
+                    : '/var/lib/icingaweb2';
+            }
+        }
+        $canonical = realpath($storageDir);
+        $this->storageDir = $canonical ? $canonical : $storageDir;
 
         set_include_path(
             implode(
@@ -285,6 +306,18 @@ abstract class ApplicationBootstrap
     }
 
     /**
+     * Get the common storage directory
+     *
+     * @param   string $subDir Optional sub directory to get
+     *
+     * @return  string
+     */
+    public function getStorageDir($subDir = null)
+    {
+        return $this->getDirWithSubDir($this->storageDir, $subDir);
+    }
+
+    /**
      * Get the Icinga library directory
      *
      * @param   string $subDir Optional sub directory to get
@@ -372,12 +405,35 @@ abstract class ApplicationBootstrap
      */
     protected function setupModuleManager()
     {
+        $paths = $this->getAvailableModulePaths();
         $this->moduleManager = new ModuleManager(
             $this,
             $this->configDir . '/enabledModules',
-            explode(':', $this->config->get('global', 'module_path', $this->baseDir . '/modules'))
+            $paths
         );
         return $this;
+    }
+
+    protected function getAvailableModulePaths()
+    {
+        $paths = array();
+        $configured = $this->config->get('global', 'module_path', $this->baseDir . '/modules');
+        $nextIsPhar = false;
+        foreach (explode(':', $configured) as $path) {
+            if ($path === 'phar') {
+                $nextIsPhar = true;
+                continue;
+            }
+
+            if ($nextIsPhar) {
+                $nextIsPhar = false;
+                $paths[] = 'phar:' . $path;
+            } else {
+                $paths[] = $path;
+            }
+        }
+
+        return $paths;
     }
 
     /**
@@ -404,10 +460,14 @@ abstract class ApplicationBootstrap
     {
         if (! @file_exists($this->config->resolvePath('authentication.ini'))) {
             $this->requiresSetup = true;
-            $this->moduleManager->loadModule('setup');
+            if ($this->moduleManager->hasInstalled('setup')) {
+                $this->moduleManager->loadModule('setup');
+            }
         } elseif ($this->setupTokenExists()) {
             // Load setup module but do not require setup
-            $this->moduleManager->loadModule('setup');
+            if ($this->moduleManager->hasInstalled('setup')) {
+                $this->moduleManager->loadModule('setup');
+            }
         }
         return $this;
     }

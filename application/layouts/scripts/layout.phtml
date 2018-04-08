@@ -28,7 +28,7 @@ $innerLayoutScript = $this->layout()->innerLayout . '.phtml';
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
   <meta http-equiv="cleartype" content="on">
   <title><?= $this->title ? $this->escape($this->title) : $this->defaultTitle ?></title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="application-name" content="Icinga Web 2">
   <meta name="apple-mobile-web-app-title" content="Icinga">
@@ -56,7 +56,28 @@ $innerLayoutScript = $this->layout()->innerLayout . '.phtml';
 <div id="layout" class="default-layout<?php if ($showFullscreen): ?> fullscreen-layout<?php endif ?>">
 <?= $this->render($innerLayoutScript); ?>
 </div>
+<script type="text/javascript">
+  (function() {
+    if (document.defaultView && document.defaultView.getComputedStyle) {
+      var matched;
+      var html = document.getElementsByTagName('html')[0];
+      var element = document.getElementById('layout');
+      var name = document.defaultView
+        .getComputedStyle(html)['font-family']
+        .replace(/['",]/g, '');
+
+      if (null !== (matched = name.match(/^([a-z]+)-layout$/))) {
+        element.className = element.className.replace('default-layout', name);
+        if ('object' === typeof window.console) {
+          window.console.log('Icinga Web 2: setting initial layout to ' + name);
+        }
+      }
+    }
+  }());
+</script>
+<!--[if lt IE 10]>
 <iframe id="fileupload-frame-target" name="fileupload-frame-target"></iframe>
+<![endif]-->
 <!--[if IE 8]>
 <script type="text/javascript" src="<?= $this->href($ie8jsfile) ?>"></script>
 <![endif]-->

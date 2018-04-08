@@ -102,6 +102,7 @@ class ConfigController extends Controller
         $this->view->modules = Icinga::app()->getModuleManager()->select()
             ->from('modules')
             ->order('enabled', 'desc')
+            ->order('installed', 'asc')
             ->order('name');
         $this->setupLimitControl();
         $this->setupPaginationControl($this->view->modules);
@@ -113,7 +114,7 @@ class ConfigController extends Controller
         $app = Icinga::app();
         $manager = $app->getModuleManager();
         $name = $this->getParam('name');
-        if ($manager->hasInstalled($name)) {
+        if ($manager->hasInstalled($name) || $manager->hasEnabled($name)) {
             $this->view->moduleData = $manager->select()->from('modules')->where('name', $name)->fetchRow();
             if ($manager->hasLoaded($name)) {
                 $module = $manager->getModule($name);
@@ -309,7 +310,10 @@ class ConfigController extends Controller
     public function resourceAction()
     {
         $this->assertPermission('config/application/resources');
-        $this->view->resources = Config::app('resources', true);
+        $this->view->resources = Config::app('resources', true)->getConfigObject()
+            ->setKeyColumn('name')
+            ->select()
+            ->order('name');
         $this->createApplicationTabs()->activate('resource');
     }
 

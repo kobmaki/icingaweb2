@@ -22,6 +22,10 @@
     border-bottom: 1px solid @gray-lighter;
     padding: 1em 3em;
     position: relative;
+
+    a {
+      color: @icinga-blue;
+    }
   }
 
   > li .message {
@@ -41,6 +45,60 @@
     position: absolute;
     right: 1em;
     top: 50%;
+  }
+}
+
+.dashboard-link {
+  .clearfix();
+  display: block;
+  max-width: 100%;
+  vertical-align: middle;
+  padding: 1em;
+  width: 36em;
+
+  &:hover {
+    -webkit-border-radius: 4px;
+       -moz-border-radius: 4px;
+            border-radius: 4px;
+
+    -webkit-background-clip: padding-box;
+       -moz-background-clip: padding;
+            background-clip: padding-box;
+
+    -webkit-box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.2);
+       -moz-box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.2);
+            box-shadow: 0 0 0.5em 0 rgba(0, 0, 0, 0.2);
+
+    background-color: @tr-hover-color;
+    text-decoration: none;
+  }
+}
+
+.dashboard.content > .container {
+  overflow-x: auto;
+}
+
+.link-meta {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+.link-label {
+  font-weight: @font-weight-bold;
+}
+
+.link-description {
+  color: @text-color-light;
+}
+
+.link-icon {
+  display: table-cell;
+  padding-right: .5em;
+  vertical-align: middle;
+
+  > i {
+    font-size: 3em;
+    opacity: 0.7;
   }
 }
 
@@ -105,6 +163,11 @@ table.multiselect tr[href] td {
 
     div.buttons {
       float: right;
+    }
+
+    button {
+      border: none;
+      background: none;
     }
   }
 }
@@ -250,4 +313,214 @@ ul.tree li a.error:hover {
   &:nth-child(3) {
     animation-delay: .4s;
   }
+}
+
+.flyover:not(.flyover-expanded) .flyover-content {
+  display: none;
+}
+
+.flyover {
+  position: relative;
+
+  .flyover-content {
+    background-color: @body-bg-color;
+    border: 1px solid @gray-lighter;
+    box-shadow: 0 0 .5em 0 rgba(0, 0, 0, 0.2);
+    position: absolute;
+  }
+
+  &.flyover-arrow-top .flyover-content:before {
+    background: @body-bg-color;
+    border-left: 1px solid @gray-lighter;
+    border-top: 1px solid @gray-lighter;
+    content: "";
+    height: 1em;
+    -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    width: 1em;
+
+    position: absolute;
+    left: 6px;
+    top: -7px;
+  }
+
+  &.flyover-right .flyover-content {
+    left: auto;
+    right: 0;
+  }
+
+  &.flyover-arrow-top.flyover-right .flyover-content:before {
+    left: auto;
+    right: 6px;
+  }
+}
+
+.slice-state-ok {
+  stroke: @color-ok;
+  background: @color-ok;
+}
+
+.slice-state-warning-handled {
+  stroke: @color-warning-handled;
+  background: @color-warning-handled;
+}
+
+.slice-state-warning {
+  stroke: @color-warning;
+  background: @color-unreachable-handled;
+}
+
+.slice-state-critical-handled {
+  stroke: @color-critical-handled;
+  background: @color-critical-handled;
+}
+
+.slice-state-critical {
+  stroke: @color-critical;
+  background: @color-critical;
+}
+
+.slice-state-unknown-handled {
+  stroke: @color-unknown-handled;
+  background: @color-unknown-handled;
+}
+
+.slice-state-unknown {
+  stroke: @color-unknown;
+  background: @color-unknown;
+}
+
+.slice-state-unreachable-handled {
+  stroke: @color-unreachable-handled;
+  background: @color-unreachable-handled;
+}
+
+.slice-state-unreachable {
+  stroke: @color-unreachable;
+  background: @color-unreachable;
+}
+
+.slice-state-pending {
+  stroke: @color-pending;
+  background: @color-pending;
+}
+
+.slice-state-not-checked {
+  stroke: @gray-light;
+  background: @gray-light;
+}
+
+.donut {
+  width: 22em;
+  height: 22em;
+  min-width: 11.5em;
+  display: table;
+}
+
+.donut-graph {
+  width: 22em;
+  height: 22em;
+}
+
+.donut-label {
+  font-weight: bold;
+  fill: @text-color;
+}
+
+.donut-label {
+  margin-top: -12.5em;
+  text-align: center;
+}
+
+.donut-label-big {
+  color: @gray-light;
+  font-size: 6em;
+  line-height: 0;
+  text-anchor: middle;
+  &:hover {
+    text-decoration: none;
+  }
+}
+
+.donut-label-big-eye-catching {
+  color: @color-critical;
+}
+
+.donut-label-small {
+  fill: @text-color;
+  font-size: 1.2em;
+  text-anchor: middle;
+  -moz-transform: translateY(0.35em);
+  -ms-transform: translateY(0.35em);
+  -webkit-transform: translateY(0.35em);
+  transform: translateY(0.35em);
+}
+
+.donut-container {
+  display: inline-block;
+  width: 36em;
+  height: 36em;
+  position: relative;
+}
+
+.donut-table {
+  max-width: 45%;
+  display: inline-block;
+  position: absolute;
+  top: 23em;
+  left: 17.5em;
+
+  & > tbody > tr:hover {
+    text-decoration: underline;
+    cursor: pointer;
+  }
+}
+
+input[type="checkbox"].expandable-toggle {
+  display: none;
+
+  & + label {
+    float: right;
+    margin-right: 1em;
+
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  & ~ .expandable-content {
+    clear: right;  // Because the label is floating right
+  }
+
+  &:checked ~ .expandable-content {
+    -webkit-transition: opacity 0.2s linear;
+    -moz-transition: opacity 0.2s linear;
+    -o-transition: opacity 0.2s linear;
+    transition: opacity 0.2s linear;
+  }
+
+  &:not(:checked) ~ .expandable-content {
+    height: 0;
+    opacity: 0;
+    visibility: hidden;
+
+    -webkit-transition: opacity 0.2s linear, visibility 0.2s;
+    -moz-transition: opacity 0.2s linear, visibility 0.2s;
+    -o-transition: opacity 0.2s linear, visibility 0.2s;
+    transition: opacity 0.2s linear, visibility 0.2s;
+  }
+
+  &:checked ~ label .expandable-expand-label {
+    display: none;
+  }
+
+  &:not(:checked) ~ label .expandable-collapse-label {
+    display: none;
+  }
+}
+
+html.no-js .progress-label {
+  display: none;
 }

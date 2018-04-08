@@ -375,7 +375,7 @@
     ActionTable.prototype.onRowClicked = function (event) {
         var _this = event.data.self;
         var $target = $(event.target);
-        var $tr = $target.closest('tr');
+        var $tr = $(event.currentTarget);
         var table = new Selection($tr.closest('table.action, table.table-row-selectable')[0], _this.icinga);
 
         // some rows may contain form actions that trigger a different action, pass those through
@@ -407,19 +407,15 @@
             table.select($tr);
         }
 
-        // update history
-        var state = icinga.history.getCol1State();
         var count = table.selections().length;
         if (count > 0) {
             var query = table.toQuery();
             _this.icinga.loader.loadUrl(query, _this.icinga.events.getLinkTargetFor($tr));
-            state += '#!' + query;
         } else {
             if (_this.icinga.events.getLinkTargetFor($tr).attr('id') === 'col2') {
                 _this.icinga.ui.layout1col();
             }
         }
-        _this.icinga.history.pushUrl(state);
 
         // redraw all table selections
         _this.tables().each(function () {

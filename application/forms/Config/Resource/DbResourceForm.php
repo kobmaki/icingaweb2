@@ -36,7 +36,7 @@ class DbResourceForm extends Form
         if (Platform::hasMssqlSupport()) {
             $dbChoices['mssql'] = 'MSSQL';
         }
-        if (Platform::hasIbmSupport()){
+        if (Platform::hasIbmSupport()) {
             $dbChoices['ibm'] = 'IBM (DB2)';
         }
         if (Platform::hasOracleSupport()) {

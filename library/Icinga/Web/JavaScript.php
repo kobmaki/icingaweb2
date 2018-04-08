@@ -24,6 +24,7 @@ class JavaScript
         'js/icinga/timezone.js',
         'js/icinga/behavior/application-state.js',
         'js/icinga/behavior/autofocus.js',
+        'js/icinga/behavior/detach.js',
         'js/icinga/behavior/tooltip.js',
         'js/icinga/behavior/sparkline.js',
         'js/icinga/behavior/tristate.js',
@@ -31,6 +32,9 @@ class JavaScript
         'js/icinga/behavior/navigation.js',
         'js/icinga/behavior/form.js',
         'js/icinga/behavior/actiontable.js',
+        'js/icinga/behavior/flyover.js',
+        'js/icinga/behavior/expandable.js',
+        'js/icinga/behavior/filtereditor.js',
         'js/icinga/behavior/selectable.js'
     );
 

@@ -60,4 +60,48 @@ class IcingaException extends Exception
             $exception->getMessage()
         );
     }
+
+    /**
+     * Return the same as {@link Exception::getTraceAsString()} for the given exception,
+     * but show only the types of scalar arguments
+     *
+     * @param   Exception   $exception
+     *
+     * @return  string
+     */
+    public static function getConfidentialTraceAsString(Exception $exception)
+    {
+        $trace = array();
+
+        foreach ($exception->getTrace() as $index => $frame) {
+            $trace[] = isset($frame['file'])
+                ? "#{$index} {$frame['file']}({$frame['line']}): "
+                : "#{$index} [internal function]: ";
+
+            if (isset($frame['class'])) {
+                $trace[] = $frame['class'];
+            }
+
+            if (isset($frame['type'])) {
+                $trace[] = $frame['type'];
+            }
+
+            $trace[] = "{$frame['function']}(";
+
+            if (isset($frame['args'])) {
+                $args = array();
+                foreach ($frame['args'] as $arg) {
+                    $type = gettype($arg);
+                    $args[] = $type === 'object' ? 'Object(' . get_class($arg) . ')' : ucfirst($type);
+                }
+
+                $trace[] = implode(', ', $args);
+            }
+            $trace[] = ")\n";
+        }
+
+        $trace[] = '#' . ($index + 1) . ' {main}';
+
+        return implode($trace);
+    }
 }

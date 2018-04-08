@@ -15,7 +15,6 @@ use Icinga\Module\Monitoring\Forms\Setup\BackendPage;
 use Icinga\Module\Monitoring\Forms\Setup\SecurityPage;
 use Icinga\Module\Monitoring\Forms\Setup\TransportPage;
 use Icinga\Module\Monitoring\Forms\Setup\IdoResourcePage;
-use Icinga\Module\Monitoring\Forms\Setup\LivestatusResourcePage;
 use Icinga\Module\Setup\Requirement\ClassRequirement;
 use Icinga\Module\Setup\Requirement\PhpModuleRequirement;
 
@@ -32,7 +31,6 @@ class MonitoringWizard extends Wizard implements SetupWizard
         $this->addPage(new WelcomePage());
         $this->addPage(new BackendPage());
         $this->addPage(new IdoResourcePage());
-        $this->addPage(new LivestatusResourcePage());
         $this->addPage(new TransportPage());
         $this->addPage(new SecurityPage());
         $this->addPage(new SummaryPage(array('name' => 'setup_monitoring_summary')));
@@ -52,7 +50,7 @@ class MonitoringWizard extends Wizard implements SetupWizard
             $page->setSummary($this->getSetup()->getSummary());
             $page->setSubjectTitle(mt('monitoring', 'the monitoring module', 'setup.summary.subject'));
         } elseif ($this->getDirection() === static::FORWARD
-            && ($page->getName() === 'setup_monitoring_ido' || $page->getName() === 'setup_monitoring_livestatus')
+            && ($page->getName() === 'setup_monitoring_ido')
         ) {
             if ((($authDbResourceData = $this->getPageData('setup_auth_db_resource')) !== null
                  && $authDbResourceData['name'] === $request->getPost('name'))
@@ -85,9 +83,6 @@ class MonitoringWizard extends Wizard implements SetupWizard
         if ($newPage->getName() === 'setup_monitoring_ido') {
             $backendData = $this->getPageData('setup_monitoring_backend');
             $skip = $backendData['type'] !== 'ido';
-        } elseif ($newPage->getName() === 'setup_monitoring_livestatus') {
-            $backendData = $this->getPageData('setup_monitoring_backend');
-            $skip = $backendData['type'] !== 'livestatus';
         }
 
         return $skip ? $this->skipPage($newPage) : $newPage;
@@ -97,6 +92,10 @@ class MonitoringWizard extends Wizard implements SetupWizard
      * Add buttons to the given page based on its position in the page-chain
      *
      * @param   Form    $page   The page to add the buttons to
+     *
+     * @todo This is never called, because its a sub-wizard only
+     * @todo This is missing the ´transport_validation´ case
+     * @see WebWizard::addButtons which does some of the needed work
      */
     protected function addButtons(Form $page)
     {
@@ -141,9 +140,7 @@ class MonitoringWizard extends Wizard implements SetupWizard
         $setup->addStep(
             new BackendStep(array(
                 'backendConfig'     => $pageData['setup_monitoring_backend'],
-                'resourceConfig'    => isset($pageData['setup_monitoring_ido'])
-                    ? array_diff_key($pageData['setup_monitoring_ido'], array('skip_validation' => null))
-                    : array_diff_key($pageData['setup_monitoring_livestatus'], array('skip_validation' => null))
+                'resourceConfig'    => array_diff_key($pageData['setup_monitoring_ido'], array('skip_validation' => null)) //TODO: Prefer a new backend once implemented.
             ))
         );
 

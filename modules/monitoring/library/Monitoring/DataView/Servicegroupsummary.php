@@ -17,6 +17,7 @@ class Servicegroupsummary extends DataView
             'services_critical_unhandled',
             'services_ok',
             'services_pending',
+            'services_severity',
             'services_total',
             'services_unknown_handled',
             'services_unknown_unhandled',
@@ -27,7 +28,7 @@ class Servicegroupsummary extends DataView
 
     public function getSearchColumns()
     {
-        return array('servicegroup_name', 'servicegroup_alias');
+        return array('servicegroup', 'servicegroup_alias');
     }
 
     public function getSortRules()
@@ -35,6 +36,13 @@ class Servicegroupsummary extends DataView
         return array(
             'servicegroup_alias' => array(
                 'order' => self::SORT_ASC
+            ),
+            'services_severity' => array(
+                'columns' => array(
+                    'services_severity',
+                    'servicegroup_alias ASC'
+                ),
+                'order' => self::SORT_DESC
             )
         );
     }

@@ -141,6 +141,7 @@ class Manager
             );
         }
         if (($dh = opendir($this->enableDir)) !== false) {
+            $isPhar = substr($this->enableDir, 0, 8) === 'phar:///';
             $this->enabledDirs = array();
             while (($file = readdir($dh)) !== false) {
                 if ($file[0] === '.' || $file === 'README') {
@@ -148,7 +149,7 @@ class Manager
                 }
 
                 $link = $this->enableDir . DIRECTORY_SEPARATOR . $file;
-                if (! is_link($link)) {
+                if (! $isPhar && ! is_link($link)) {
                     Logger::warning(
                         'Found invalid module in enabledModule directory "%s": "%s" is not a symlink',
                         $this->enableDir,
@@ -157,18 +158,20 @@ class Manager
                     continue;
                 }
 
-                $dir = realpath($link);
-                if (! file_exists($dir) || !is_dir($dir)) {
+                $dir = $isPhar ? $link : realpath($link);
+                if ($dir !== false && is_dir($dir)) {
+                    $this->enabledDirs[$file] = $dir;
+                } else {
+                    $this->enabledDirs[$file] = null;
+
                     Logger::warning(
                         'Found invalid module in enabledModule directory "%s": "%s" points to non existing path "%s"',
                         $this->enableDir,
                         $link,
                         $dir
                     );
-                    continue;
                 }
 
-                $this->enabledDirs[$file] = $dir;
                 ksort($this->enabledDirs);
             }
             closedir($dh);
@@ -329,12 +332,6 @@ class Manager
         }
 
         $link = $this->enableDir . DIRECTORY_SEPARATOR . $name;
-        if (! file_exists($link)) {
-            throw new ConfigurationError(
-                'Cannot disable module "%s". Module is not installed.',
-                $name
-            );
-        }
         if (! is_link($link)) {
             throw new ConfigurationError(
                 'Cannot disable module %s at %s. '
@@ -346,7 +343,7 @@ class Manager
             );
         }
 
-        if (file_exists($link) && is_link($link)) {
+        if (is_link($link)) {
             if (! @unlink($link)) {
                 $error = error_get_last();
                 throw new SystemPermissionException(
@@ -471,6 +468,7 @@ class Manager
      * Each entry has the following fields
      * * name, name of the module as a string
      * * path, path where the module is located as a string
+     * * installed, whether the module is installed or not as a boolean
      * * enabled, whether the module is enabled or not as a boolean
      * * loaded, whether the module is loaded or not as a boolean
      *
@@ -480,25 +478,28 @@ class Manager
     {
         $info = array();
 
-        $enabled = $this->listEnabledModules();
-        foreach ($enabled as $name) {
-            $info[$name] = (object) array(
-                'name'    => $name,
-                'path'    => $this->enabledDirs[$name],
-                'enabled' => true,
-                'loaded'  => $this->hasLoaded($name)
-            );
-        }
-
         $installed = $this->listInstalledModules();
         foreach ($installed as $name) {
             $info[$name] = (object) array(
-                'name'    => $name,
-                'path'    => $this->installedBaseDirs[$name],
-                'enabled' => $this->hasEnabled($name),
-                'loaded'  => $this->hasLoaded($name)
+                'name'      => $name,
+                'path'      => $this->installedBaseDirs[$name],
+                'installed' => true,
+                'enabled'   => $this->hasEnabled($name),
+                'loaded'    => $this->hasLoaded($name)
             );
         }
+
+        $enabled = $this->listEnabledModules();
+        foreach ($enabled as $name) {
+            $info[$name] = (object) array(
+                'name'      => $name,
+                'path'      => $this->enabledDirs[$name],
+                'installed' => $this->enabledDirs[$name] !== null,
+                'enabled'   => true,
+                'loaded'    => $this->hasLoaded($name)
+            );
+        }
+
         return $info;
     }
 
